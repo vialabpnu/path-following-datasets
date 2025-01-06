@@ -1,41 +1,38 @@
-# A Path-Planning Datasets in Unstructured Environments for Autonomous Driving
+# A Path-Planning Dataset in Unstructured Environments
 
-This repository contains datasets for path planning in unstructured environments, with one example being a parking lot map and slope map from Pusan National University (PNU). These datasets were created to address the need for specialized data to develop and evaluate path-planning algorithms for autonomous vehicles and robots navigating in complex, real-world scenarios.
+This repository contains a dataset for control algorithm benchmarking in unstructured environments, with a focus on a parking lot map and slope map from Pusan National University (PNU). This dataset was created to address the need for specialized data to evaluate the performance of control algorithms for autonomous vehicles and robots navigating in complex, real-world scenarios.
 
 ## Background
 
-Traditional path-planning algorithms often rely on structured environments with well-defined rules and predictable obstacles. However, unstructured environments present unique challenges:
+Traditional control algorithms are often evaluated in structured environments with well-defined paths and predictable conditions. However, unstructured environments present unique challenges for control algorithms:
 
-* **Complex layouts:** Unstructured environments can have irregular shapes, varying terrain, and diverse obstacles.
-* **Limited space:** Maneuvering in tight spaces requires precise and efficient path planning.
+* **Complex paths:** Unstructured environments often require navigating complex paths with varying curvature, elevation changes, and obstacles.
+* **Limited space:** Maneuvering in tight spaces demands precise and responsive control.
+* **Low-speed navigation:** Compared to structured environments where higher speeds are common, unstructured environments often involve lower speeds due to the increased complexity and need for careful maneuvering. This necessitates accurate control at lower speeds.
 
-Existing datasets for autonomous driving often focus on road driving and may not adequately capture the specific challenges of unstructured environments. This project aims to bridge this gap by providing dedicated datasets for path planning in such scenarios, specifically focusing on **static** environments.
+Existing datasets for autonomous driving often focus on road driving and may not adequately capture the specific challenges of unstructured environments. This project aims to bridge this gap by providing a dedicated dataset for evaluating control algorithms in such scenarios.
 
 ## Dataset Description
 
 This dataset includes:
 
-* **600+ paths:** Collected from various unstructured environments, including:
-    * **PNU parking lot and slope map:** This dataset features paths collected within PNU's parking lots, incorporating elevation changes and challenging terrain.
-    * [Describe other environments included in the dataset, if any.]
-* **Sensor data:**  [Specify the types of sensor data included, e.g., camera, lidar, radar, etc.]
-* **Ground truth:** Accurate vehicle position, path, and surrounding environment information.
-* **Annotations:**  [Describe the types of annotations provided, e.g., object labels, lane markings, etc.]
-* **Static environment:**  The dataset focuses on static obstacles and does not include dynamic objects like pedestrians or moving vehicles.
+* **600+ paths:**  Generated based on the HD map of PNU's parking lot and a slope map built in the Physics Building of PNU. These paths incorporate elevation changes and the complex layout of the parking lot.
+* **Annotations:** Each path is annotated with a difficulty level (easy, moderate, or hard) based on its curvature characteristics. This allows for targeted evaluation of control algorithms on different difficulty levels.
 
 **Example use cases:**
 
-* **Autonomous navigation in challenging environments:** Developing and evaluating autonomous navigation systems for robots and vehicles in complex, off-road scenarios with static obstacles.
-* **Parking lot navigation:**  While not the sole focus, the PNU parking lot data can be used for developing and evaluating autonomous valet parking (AVP) systems in scenarios without dynamic obstacles.
-* **Algorithm benchmarking:** Comparing the performance of different path-planning algorithms in unstructured, static environments.
+* **Parking lot navigation:** This data can be used for evaluating the performance of autonomous valet parking (AVP) systems in navigating complex parking lot scenarios.
+* **Control algorithm benchmarking:** Comparing the performance of different control algorithms in tracking the generated paths, analyzing their ability to handle varying curvature and difficulty levels.
 
 ## Data Collection
 
-[Describe the data collection process, including the equipment used, locations, and any specific considerations. **Mention that data was collected in static environments without dynamic obstacles.**]
+The paths in this dataset were generated using the Hybrid A* algorithm. This algorithm combines the benefits of A* search with continuous state space exploration, making it suitable for finding optimal paths in complex environments with kinodynamic constraints, such as those encountered by vehicles. By incorporating heuristics and continuous state transitions, Hybrid A* efficiently explores the search space and generates smooth, drivable paths.
+
+The algorithm was applied to the HD map of PNU's parking lot and a slope map built in the Physics Building to generate a diverse set of paths with varying difficulty levels.
 
 ## Data Format
 
-[Explain the format of the data, including file organization, data structures, and any relevant metadata.]
+[Explain the format of the data, including file organization, data structures, and any relevant metadata. Specify how the paths are represented, e.g., as a sequence of waypoints, etc. **Include how the difficulty annotations are encoded in the data.**]
 
 ## Usage Instructions
 
@@ -49,7 +46,7 @@ If you use this dataset in your research, please cite the following paper:
 
 ## License
 
-[Specify the license under which the dataset is released, e.g., MIT License, Creative Commons, etc.]
+This dataset is released under the **GPL-3.0 license**.
 
 ## Contributing
 
