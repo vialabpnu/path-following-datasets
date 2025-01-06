@@ -22,8 +22,11 @@ This dataset includes:
 
 **Example use cases:**
 
-* **Control algorithm benchmarking:** Comparing the performance of different control algorithms in tracking the generated paths, analyzing their ability to handle varying curvature and difficulty levels.
+* **Control algorithm benchmarking:** Comparing the performance of different control algorithms (e.g., PID, MPC, pure pursuit) in tracking the generated paths, analyzing their ability to handle varying curvature and difficulty levels.
 * **Parking lot navigation:** This data can be used for evaluating the performance of autonomous valet parking (AVP) systems in navigating complex parking lot scenarios.
+* **Developing learning-based control algorithms:** Training and evaluating reinforcement learning agents or other learning-based controllers to navigate in unstructured environments.
+* **Testing path-following algorithms in the presence of disturbances:** Evaluating the robustness of control algorithms to disturbances like wind, tire slip, or sensor noise.
+* **Analyzing the impact of different vehicle parameters on control performance:** Studying how factors like vehicle dimensions, mass, and tire characteristics affect path-following accuracy.
 
 ## Data Collection
 
