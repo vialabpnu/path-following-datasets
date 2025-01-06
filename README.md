@@ -22,8 +22,8 @@ This dataset includes:
 
 **Example use cases:**
 
-* **Parking lot navigation:** This data can be used for evaluating the performance of autonomous valet parking (AVP) systems in navigating complex parking lot scenarios.
 * **Control algorithm benchmarking:** Comparing the performance of different control algorithms in tracking the generated paths, analyzing their ability to handle varying curvature and difficulty levels.
+* **Parking lot navigation:** This data can be used for evaluating the performance of autonomous valet parking (AVP) systems in navigating complex parking lot scenarios.
 
 ## Data Collection
 
