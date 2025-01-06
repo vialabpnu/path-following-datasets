@@ -1,16 +1,17 @@
-# A Path-Planning Dataset in Unstructured Environments
+# A Path-Following Dataset in Unstructured Environments for Autonomous Driving
 
-This repository contains a dataset for control algorithm benchmarking in unstructured environments, with a focus on a parking lot map and slope map from Pusan National University (PNU). This dataset was created to address the need for specialized data to evaluate the performance of control algorithms for autonomous vehicles and robots navigating in complex, real-world scenarios.
+This repository contains a dataset for control algorithm benchmarking in unstructured environments, specifically targeting scenarios like parking lots where precise low-speed maneuvering is crucial. This dataset, based on a map and slope data from Pusan National University (PNU), was created to address the need for specialized data to evaluate the performance of control algorithms for autonomous vehicles and robots navigating in such complex, real-world scenarios.
 
 ## Background
 
-Traditional control algorithms are often evaluated in structured environments with well-defined paths and predictable conditions. However, unstructured environments present unique challenges for control algorithms:
+While there are existing datasets for autonomous driving, they often focus on structured environments like highways and urban roads. These datasets are valuable for high-speed navigation and scenarios with well-defined lanes and traffic rules. However, they do not adequately capture the unique challenges of unstructured environments like parking lots, where:
 
-* **Complex paths:** Unstructured environments often require navigating complex paths with varying curvature, elevation changes, and obstacles.
-* **Limited space:** Maneuvering in tight spaces demands precise and responsive control.
-* **Low-speed navigation:** Compared to structured environments where higher speeds are common, unstructured environments often involve lower speeds due to the increased complexity and need for careful maneuvering. This necessitates accurate control at lower speeds.
+* **Maneuvering is predominantly at low speeds**, requiring precise control and responsiveness to navigate tight spaces and avoid collisions.
+* **Paths are often complex and irregular**, with sharp turns, varying curvature, and obstacles that necessitate sophisticated path-following algorithms.
+* **Elevation changes can significantly impact vehicle dynamics**, demanding control algorithms that can maintain stability and trajectory accuracy on slopes.
 
-Existing datasets for autonomous driving often focus on road driving and may not adequately capture the specific challenges of unstructured environments. This project aims to bridge this gap by providing a dedicated dataset for evaluating control algorithms in such scenarios.
+This dataset aims to fill this gap by providing a dedicated resource for evaluating and improving control algorithms specifically for unstructured environments, enabling the development of more robust and reliable autonomous navigation systems. This data can be used for benchmarking both classical and learning-based control algorithms, facilitating the development of advanced techniques for autonomous driving in challenging scenarios. The dataset is classified into three difficulty levels, providing a diverse range of paths for comprehensive evaluation and benchmarking.
+
 
 ## Dataset Description
 
@@ -32,7 +33,18 @@ The algorithm was applied to the HD map of PNU's parking lot and a slope map bui
 
 ## Data Format
 
-[Explain the format of the data, including file organization, data structures, and any relevant metadata. Specify how the paths are represented, e.g., as a sequence of waypoints, etc. **Include how the difficulty annotations are encoded in the data.**]
+The dataset is provided in CSV file format. Each CSV file represents a single path and contains the following four columns:
+
+* **ref_x:**  The x-coordinate of the reference path (in meters).
+* **ref_y:** The y-coordinate of the reference path (in meters).
+* **ref_yaw:** The yaw angle of the reference path (in radians).
+* **ref_z:** The z-coordinate (height) of the reference path (in meters).
+
+The difficulty level and the map used for generating the path are encoded in the filename. For example:
+
+* `E_Path120_PB.csv` indicates an easy path (E) generated from the Physics Building (PB) map.
+* `M_Path200_EE.csv` indicates a moderate path (M) generated from the EE building (EE) map.
+* `H_Path300_EE.csv` indicates a hard path (H) generated from the EE parking lot (EE) map.
 
 ## Usage Instructions
 
@@ -47,6 +59,10 @@ If you use this dataset in your research, please cite the following paper:
 ## License
 
 This dataset is released under the **GPL-3.0 license**.
+
+## Contributing
+
+Contributions to this dataset are welcome. Please contact [your contact information] for more details.
 
 ## Acknowledgements
 
