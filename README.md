@@ -16,7 +16,7 @@ Existing datasets for autonomous driving often focus on road driving and may not
 
 This dataset includes:
 
-* **600+ paths:**  Generated based on the HD map of PNU's parking lot and a slope map built in the Physics Building of PNU. These paths incorporate elevation changes and the complex layout of the parking lot.
+* **1000+ paths:**  Generated based on the HD map of PNU's parking lot and a slope map built in the Physics Building of PNU. These paths incorporate elevation changes and the complex layout of the parking lot.
 * **Annotations:** Each path is annotated with a difficulty level (easy, moderate, or hard) based on its curvature characteristics. This allows for targeted evaluation of control algorithms on different difficulty levels.
 
 **Example use cases:**
