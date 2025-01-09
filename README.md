@@ -63,10 +63,6 @@ If you use this dataset in your research, please cite the following paper:
 
 This dataset is released under the **GPL-3.0 license**.
 
-## Contributing
-
-Contributions to this dataset are welcome. Please contact [your contact information] for more details.
-
 ## Acknowledgements
 
 [Acknowledge any individuals or organizations that supported the creation of this dataset.]
