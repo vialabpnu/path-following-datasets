@@ -1,0 +1,8 @@
+prefix=/home/vialab/car_ws/src/motion_planner/build/devel
+
+Name: motion_planner
+Description: Description of motion_planner
+Version: 0.0.0
+Cflags: -I/home/vialab/car_ws/src/motion_planner/build/devel/include -I/home/vialab/car_ws/src/motion_planner/scripts
+Libs: -L${prefix}/lib 
+Requires: rospy ackermann_msgs message_runtime

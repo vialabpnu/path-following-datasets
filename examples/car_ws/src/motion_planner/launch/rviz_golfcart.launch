@@ -1,0 +1,6 @@
+<!-- 
+ -->
+<launch>
+	<!-- RViz-->
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find motion_planner)/cfg/rviz_golfcart_navigation_drlmpc.rviz"/>
+</launch>

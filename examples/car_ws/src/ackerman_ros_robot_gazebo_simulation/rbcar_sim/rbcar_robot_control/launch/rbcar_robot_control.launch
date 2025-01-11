@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="publish_tf" default="false"/>
+
+  <node name="rbcar_robot_control" pkg="rbcar_robot_control" type="rbcar_robot_control_node" output="screen">
+    <remap from="joint_states" to="rbcar/joint_states"/>
+    <param name="model" value="rbcar"/>
+    <param name="publish_odom_tf" value="$(arg publish_tf)"/>
+    <rosparam file="$(find rbcar_robot_control)/config/delay_params.yaml" command="load" />
+  </node> 
+
+  <!--<node name="delay_republish" pkg="rbcar_robot_control" type="delay_republish_node" output="screen"/>-->
+  
+</launch>

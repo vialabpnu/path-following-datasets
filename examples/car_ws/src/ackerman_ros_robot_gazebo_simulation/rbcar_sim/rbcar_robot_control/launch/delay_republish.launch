@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<launch>
+   <node name="delay_republish" pkg="rbcar_robot_control" type="delay_republish_node" output="screen">
+      <rosparam file="$(find rbcar_robot_control)/config/delay_params.yaml" command="load" />
+   </node>
+</launch>

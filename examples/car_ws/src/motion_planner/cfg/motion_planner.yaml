@@ -1,0 +1,12 @@
+global_path_receive_once: true
+mode: val # train or val
+path_file_dir: /car_ws/path/20240404_0400/train/path_147.csv
+path_train_pre_dir: aggregated_path_data_PB_2025-01-05_OnlyPhysicsBuilding #20240106_CombinedPathPlanningDatasets_EE_PB #20240717_1454_filtered_Path_for_use
+ref_path_load_from_file: true
+save_global_path: false
+skip_points_num: 1
+train_rl_model: true
+use_linear_spline: false
+use_motion_planner: true
+use_past_seed: false
+decay_constant_mpc: 0.0

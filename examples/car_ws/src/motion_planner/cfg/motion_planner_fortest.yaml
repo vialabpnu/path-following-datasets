@@ -1,0 +1,14 @@
+global_path_receive_once: true
+goal_distance_threshold: 1.0
+mode: val
+path_file_dir: /car_ws/path/20240404_0400/train/path_147.csv
+# path_train_pre_dir: 20240717_1454_filtered_Path_for_use
+path_train_pre_dir: 20241108_ParkingLotAVPPath
+ref_path_load_from_file: false
+save_global_path: false
+skip_points_num: 1
+train_rl_model: true
+use_linear_spline: false
+use_motion_planner: true
+use_past_seed: false
+reset_file_path: /home/vialab/reset_control.txt

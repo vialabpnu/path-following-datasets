@@ -1,0 +1,17 @@
+<launch>	
+    <!--  ************** Motion Planner ***************  -->
+	<arg name="file_path" default="None"/>
+	<arg name="eval_mode" default="false"/>
+	<arg name="base_dir" default="/home/vialab" />
+
+	<node pkg="motion_planner" type="MotionPlannerNode.py" respawn="false" name="motion_planner_node" output="screen" args="--eval_mode $(arg eval_mode) --file_path_dir $(arg file_path)" required="true">
+	<!-- Config file for the motion planner -->
+		<rosparam command="load" file="$(find motion_planner)/cfg/motion_planner.yaml" />
+	</node>
+	<node pkg="motion_planner" type="RobotMarkerVisualizer.py" respawn="false" name="marker_visualization_node" output="screen"></node>
+	<node pkg="motion_planner" type="PathVisualizer.py" respawn="false" name="path_visualization_node" output="screen"></node>
+	<node name="map_server_visualization" pkg="map_server" type="map_server" args="$(find motion_planner)/Map/MapParam_ParkingLot_RoadMarker.yaml" output="screen">
+        <param name="frame_id" value="map"/>
+        <remap from="/map" to="/map_visualization"/>
+	</node>
+</launch>

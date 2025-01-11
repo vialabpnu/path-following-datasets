@@ -1,16 +1,20 @@
-# A Path-Following Dataset in Unstructured Environments for Autonomous Driving
+# A Path-Following Dataset in Less structured Environments for Autonomous Driving
 
-This repository contains a dataset for control algorithm benchmarking in unstructured environments, specifically targeting scenarios like parking lots where precise low-speed maneuvering is crucial. This dataset, based on a map and slope data from Pusan National University (PNU), was created to address the need for specialized data to evaluate the performance of control algorithms for autonomous vehicles and robots navigating in such complex, real-world scenarios.
+![UBUNTU](https://img.shields.io/badge/UBUNTU-18.04-orange?style=plastic&logo=ubuntu)
+![python](https://img.shields.io/badge/Python-2.7-blue?style=plastic&logo=python)
+![ROS2](https://img.shields.io/badge/ROS-Melodic-white?style=plastic&logo=ros)
+
+This repository contains a dataset for control algorithm benchmarking in Less structured environments, specifically targeting scenarios like parking lots where precise low-speed maneuvering is crucial. This dataset, based on a map and slope data from Pusan National University (PNU), was created to address the need for specialized data to evaluate the performance of control algorithms for autonomous vehicles and robots navigating in such complex, real-world scenarios.
 
 ## Background
 
-While there are existing datasets for autonomous driving, they often focus on structured environments like highways and urban roads. These datasets are valuable for high-speed navigation and scenarios with well-defined lanes and traffic rules. However, they do not adequately capture the unique challenges of unstructured environments like parking lots, where:
+While there are existing datasets for autonomous driving, they often focus on structured environments like highways and urban roads. These datasets are valuable for high-speed navigation and scenarios with well-defined lanes and traffic rules. However, they do not adequately capture the unique challenges of Less structured environments like parking lots, where:
 
 * **Maneuvering is predominantly at low speeds**, requiring precise control and responsiveness to navigate tight spaces and avoid collisions.
 * **Paths are often complex and irregular**, with sharp turns, varying curvature, and obstacles that necessitate sophisticated path-following algorithms.
 * **Elevation changes can significantly impact vehicle dynamics**, demanding control algorithms that can maintain stability and trajectory accuracy on slopes.
 
-This dataset aims to fill this gap by providing a dedicated resource for evaluating and improving control algorithms specifically for unstructured environments, enabling the development of more robust and reliable autonomous navigation systems. This data can be used for benchmarking both classical and learning-based control algorithms, facilitating the development of advanced techniques for autonomous driving in challenging scenarios. The dataset is classified into three difficulty levels, providing a diverse range of paths for comprehensive evaluation and benchmarking.
+This dataset aims to fill this gap by providing a dedicated resource for evaluating and improving control algorithms specifically for Less structured environments, enabling the development of more robust and reliable autonomous navigation systems. This data can be used for benchmarking both classical and learning-based control algorithms, facilitating the development of advanced techniques for autonomous driving in challenging scenarios. The dataset is classified into three difficulty levels, providing a diverse range of paths for comprehensive evaluation and benchmarking.
 
 
 ## Dataset Description
@@ -24,7 +28,7 @@ This dataset includes:
 
 * **Control algorithm benchmarking:** Comparing the performance of different control algorithms (e.g., PID, MPC, pure pursuit) in tracking the generated paths, analyzing their ability to handle varying curvature and difficulty levels.
 * **Parking lot navigation:** This data can be used for evaluating the performance of autonomous valet parking (AVP) systems in navigating complex parking lot scenarios.
-* **Developing learning-based control algorithms:** Training and evaluating reinforcement learning agents or other learning-based controllers to navigate in unstructured environments.
+* **Developing learning-based control algorithms:** Training and evaluating reinforcement learning agents or other learning-based controllers to navigate in Less structured environments.
 * **Testing path-following algorithms in the presence of disturbances:** Evaluating the robustness of control algorithms to disturbances like wind, tire slip, or sensor noise.
 * **Analyzing the impact of different vehicle parameters on control performance:** Studying how factors like vehicle dimensions, mass, and tire characteristics affect path-following accuracy.
 

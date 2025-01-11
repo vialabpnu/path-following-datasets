@@ -1,0 +1,6 @@
+cd car_ws/
+source devel/setup.bash
+roslaunch rbcar_sim_bringup rbcar_complete.launch
+sleep 2
+roslaunch rbcar_control rbcar_control.launch
+roslaunch rbcar_localization odom_to_tf.launch 

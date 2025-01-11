@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Site BuildName="(empty)"
+	BuildStamp="20241229-1435-Experimental"
+	Name="s11"
+	Generator="ctest-3.30.0"
+	CompilerName="/usr/bin/c++"
+	CompilerVersion="7.5.0"
+	OSName="Linux"
+	Hostname="s11"
+	OSRelease="5.4.0-150-generic"
+	OSVersion="#167~18.04.1-Ubuntu SMP Wed May 24 00:51:42 UTC 2023"
+	OSPlatform="x86_64"
+	Is64Bits="1"
+	VendorString="GenuineIntel"
+	VendorID="Intel Corporation"
+	FamilyID="6"
+	ModelID="85"
+	ProcessorCacheSize="19712"
+	NumberOfLogicalCPU="28"
+	NumberOfPhysicalCPU="14"
+	TotalVirtualMemory="2047"
+	TotalPhysicalMemory="63997"
+	LogicalProcessorsPerPhysical="2"
+	ProcessorClockFrequency="1200.01"
+	>
+	<Testing>
+		<StartDateTime>Dec 29 23:35 KST</StartDateTime>
+		<StartTestTime>1735482920</StartTestTime>
+		<TestList/>
+		<EndDateTime>Dec 29 23:35 KST</EndDateTime>
+		<EndTestTime>1735482920</EndTestTime>
+		<ElapsedMinutes>0</ElapsedMinutes>
+	</Testing>
+</Site>

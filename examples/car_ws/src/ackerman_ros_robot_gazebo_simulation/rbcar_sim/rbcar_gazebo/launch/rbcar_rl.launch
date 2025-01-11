@@ -1,0 +1,108 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!-- roslaunch arguments -->
+  <arg name="debug" default="false"/>
+  <arg name="gui" default="false"/>
+
+  <!-- <arg name="x" default="0.0"/>
+  <arg name="y" default="0.0"/>
+  <arg name="z" default="0.035859"/>
+  <arg name="roll" default="0.00"/>
+  <arg name="pitch" default="0.00"/>
+  <arg name="yaw" default="0.0"/> -->
+
+  <!-- demo initial path -->
+  <!-- <arg name="x" default="9.75269"/> -->
+  <!-- <arg name="y" default="0.0874251"/> -->
+  <!-- <arg name="z" default="0.035859"/> -->
+  <!-- <arg name="x" default="10.0381442"/>
+  <arg name="y" default="-1.12954486"/>
+  <arg name="z" default="0.097952"/>
+  <arg name="roll" default="0.00"/>
+  <arg name="pitch" default="0.00"/>
+  <arg name="yaw" default="-1.3404"/> -->
+
+
+  <!-- Valet path test center cog--> 
+  <!--<arg name="x" default="-19.79999259853"/>
+  <arg name="y" default="-11.3092382113"/>
+  <arg name="z" default="0.097952"/>
+  <arg name="roll" default="0.00"/>
+  <arg name="pitch" default="0.00"/>
+  <arg name="yaw" default="-0.024"/> -->
+
+    <!-- Valet path starting point-->
+  <arg name="x" default="-21.044951474527"/>
+  <arg name="y" default="-12.1970892167814"/>
+  <!-- <arg name="y" default="-11.1970892167814"/> -->
+  <arg name="z" default="0.0615"/>
+  <arg name="roll" default="0.00"/>
+  <arg name="pitch" default="0.00"/>
+  <!-- <arg name="yaw" default="0.08984884598196"/> -->
+  <arg name="yaw" default="-0.01"/> 
+
+  
+  <!-- Pickup end point
+  <arg name="x" default="30.977"/>
+  <arg name="y" default="-15.059"/>
+  <arg name="z" default="0.097952"/>
+  <arg name="roll" default="0.00"/>
+  <arg name="pitch" default="0.00"/>
+  <arg name="yaw" default="-1.5331699"/> -->
+
+  <!-- Valet path test-->
+  <!-- <arg name="x" default="0.0"/>
+  <arg name="y" default="0.0"/>
+  <arg name="z" default="0.097952"/>
+  <arg name="roll" default="0.00"/>
+  <arg name="pitch" default="0.00"/>
+  <arg name="yaw" default="-0.08984"/> -->
+
+  <!-- Parking path test -->
+  <!-- <arg name="x" default="24.8671217664"/> 
+  <arg name="y" default="0.5511400539"/>
+  <arg name="z" default="0.097952"/>
+  <arg name="roll" default="0.00"/>
+  <arg name="pitch" default="0.00"/>
+  <arg name="yaw" default="0.018175"/> -->
+
+  <!-- rbcar_control launch file 
+  <include file="$(find rbcar_control)/launch/rbcar_control.launch" />
+  -->
+  
+  <!--include file="$(find rbcar_robot_control)/launch/rbcar_robot_control.launch" / -->
+
+  <!-- rbcar_joy launch file -->
+  <!-- Include this file only if you wish a the control the robot via joystick, it has to be commented if you want to set goals for autonomous navigation -->
+  <!-- for this node to work correctly first you need to succesfully connect the ps3 joystick with:
+		sudo su
+		rosrun ps3joy sixpair
+		rosrun ps3joy ps3joy.py
+  -->
+  <!-- include file="$(find rbcar_joystick)/launch/rbcar_joy.launch" / -->
+
+  <!-- We resume the logic in empty_world.launch, changing only the name of the world to be launched -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find rbcar_gazebo)/worlds/new_asphalt_nofriction_noobstacle.world"/>
+    <arg name="debug" value="$(arg debug)" />
+    <arg name="gui" value="$(arg gui)" />
+    <arg name="paused" value="false"/>
+    <arg name="use_sim_time" value="true"/>
+    <arg name="headless" value="false"/>
+  </include>
+
+  <!-- ADD PEDESTRIAN WALKING -->
+  <!-- <env name="GAZEBO_MODEL_PATH" value="$(find rbcar_gazebo)/model"/> -->
+  <!-- <env name="GAZEBO_RESOURCE_PATH" value="${GAZEBO_RESOURCE_PATH}:$(find gazebo_sfm_plugin)/media/models"/> -->
+
+  <!-- Load the URDF into the ROS Parameter Server -->
+  <param name="robot_description"
+         command="$(find xacro)/xacro '$(find rbcar_description)/robots/rbcar.urdf.xacro' --inorder" />
+         
+  <!-- Call a python script to the run a service call to gazebo_ros to spawn a URDF robot -->
+  <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+        args="-urdf -model rbcar -param robot_description -x $(arg x) -y $(arg y) -z $(arg z)
+              -R $(arg roll) -P $(arg pitch) -Y $(arg yaw)"/>
+
+</launch>

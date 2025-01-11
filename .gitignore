@@ -1,0 +1,27 @@
+.vscode
+/devel
+/build
+/install
+
+# Log files
+*.log
+*.log.*
+
+# Sensitive or high-volume data
+*.bag
+*.pcap
+
+# Generated files
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+
+# CMake
+CMakeLists.txt.user
+CMakeCache.txt
+cmake_install.cmake
+CMakeFiles/
+Makefile
+install_manifest.txt
+compile_commands.json
