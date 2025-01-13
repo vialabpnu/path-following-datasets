@@ -17,21 +17,21 @@ jobs:
           fetch-depth: 0 
 
       - name: Change directory to train data
-        run: cd path_datasets/train
+        run: cd $GITHUB_WORKSPACE/path_datasets/train 
 
       - name: Calculate checksums for train data
         run: |
           find . -name "*.csv" -type f -exec sha256sum {} \; > ../new_checksums_train.txt 
 
       - name: Change directory to test data
-        run: cd ../test 
+        run: cd $GITHUB_WORKSPACE/path_datasets/test
 
       - name: Calculate checksums for test data
         run: |
           find . -name "*.csv" -type f -exec sha256sum {} \; > ../new_checksums_test.txt
 
       - name: Change directory to path_datasets
-        run: cd .. 
+        run: cd $GITHUB_WORKSPACE/path_datasets
 
       - name: Compare train checksums
         run: diff checksums_train.txt new_checksums_train.txt
