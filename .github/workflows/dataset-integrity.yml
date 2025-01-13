@@ -21,14 +21,14 @@ jobs:
 
       - name: Calculate checksums for train data
         run: |
-          find . -name "*.csv" -type f -exec sha256sum {} \; > ../new_checksums_train.txt 
+          find . -name "*.csv" -type f -exec sha256sum {} \; > $GITHUB_WORKSPACE/path_datasets/new_checksums_train.txt 
 
       - name: Change directory to test data
         run: cd $GITHUB_WORKSPACE/path_datasets/test
 
       - name: Calculate checksums for test data
         run: |
-          find . -name "*.csv" -type f -exec sha256sum {} \; > ../new_checksums_test.txt
+          find . -name "*.csv" -type f -exec sha256sum {} \; > $GITHUB_WORKSPACE/path_datasets/new_checksums_test.txt
 
       - name: Change directory to path_datasets
         run: cd $GITHUB_WORKSPACE/path_datasets
