@@ -53,10 +53,10 @@ jobs:
         run: cd $GITHUB_WORKSPACE/path_datasets
 
       - name: Compare train checksums
-        run: diff original_checksums_train.txt new_checksums_train.txt
+        run: diff $GITHUB_WORKSPACE/path_datasets/original_checksums_train.txt $GITHUB_WORKSPACE/path_datasets/new_checksums_train.txt
 
       - name: Compare test checksums
-        run: diff original_checksums_test.txt new_checksums_test.txt
+        run: diff $GITHUB_WORKSPACE/path_datasets/original_checksums_test.txt $GITHUB_WORKSPACE/path_datasets/new_checksums_test.txt
 
       - name: Fail if differences found
         if: failure()
