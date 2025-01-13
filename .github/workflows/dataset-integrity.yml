@@ -14,27 +14,24 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0 # Fetch complete repository history
+          fetch-depth: 0 
 
-      - name: Print working directory before cd
-        run: pwd
-
-      - name: Change directory to data
-        run: cd path_datasets
-
-      - name: Print working directory after cd
-        run: pwd
-
-      - name: List directory contents
-        run: ls -l path_datasets 
+      - name: Change directory to train data
+        run: cd path_datasets/train
 
       - name: Calculate checksums for train data
         run: |
-          find train -name "*.csv" -type f -exec sha256sum {} \; > new_checksums_train.txt
+          find . -name "*.csv" -type f -exec sha256sum {} \; > ../new_checksums_train.txt 
+
+      - name: Change directory to test data
+        run: cd ../test 
 
       - name: Calculate checksums for test data
         run: |
-          find test -name "*.csv" -type f -exec sha256sum {} \; > new_checksums_test.txt
+          find . -name "*.csv" -type f -exec sha256sum {} \; > ../new_checksums_test.txt
+
+      - name: Change directory to path_datasets
+        run: cd .. 
 
       - name: Compare train checksums
         run: diff checksums_train.txt new_checksums_train.txt
