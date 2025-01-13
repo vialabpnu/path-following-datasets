@@ -21,7 +21,21 @@ path_available = False
 data = np.zeros((100, 1))
 new_data = 0
 
+
+def get_car_ws_path():
+    """
+    Determines the car_ws path by navigating up from the current file's location.
+    """
+    current_file_path = os.path.abspath(__file__)
+    current_dir = os.path.dirname(current_file_path)
+    src_dir = os.path.abspath(os.path.join(current_dir, '..', '..', '..', '..'))
+    car_ws_path = os.path.abspath(os.path.join(src_dir, '..'))
+    return car_ws_path
+
+
 class ControlCommand:
+    # Get the car_ws path
+    car_ws_path = get_car_ws_path()
     def __init__(self, file_path_name = None, horizon_type="nonuni_sparse_var"):
         self.HEADER_SIZE = 10
         self.ipaddress = None
@@ -34,7 +48,7 @@ class ControlCommand:
         self.horizon_type = horizon_type
         
         print(f"Horizon type: {self.horizon_type}")
-        self.mpc = LinearMPCwithMP.LinearMPC(N=9, type=self.horizon_type)
+        self.mpc = LinearMPCwithMP.LinearMPC(N=9, type=self.horizon_type) # N=9 (Current step 1 + 8 future steps)
         print(f"Weighting matrices: {self.mpc.Q_curve}")
         self.vehicle_state = LinearMPCwithMP.VehicleState()
         self.server_dt = self.mpc.DT
@@ -112,8 +126,8 @@ class ControlCommand:
         
         if self.is_sim:
             # Read the parameters from the yaml file for the simulation
-            delay_yaml_file_dir = "/home/vialab/car_ws/src/ackerman_ros_robot_gazebo_simulation/rbcar_sim/rbcar_robot_control/config/delay_params.yaml"
-            motion_planner_yaml_file_dir = "/home/vialab/car_ws/src/motion_planner/cfg/motion_planner.yaml"
+            delay_yaml_file_dir = os.path.join(self.car_ws_path, "src/ackerman_ros_robot_gazebo_simulation/rbcar_sim/rbcar_robot_control/config/delay_params.yaml")
+            motion_planner_yaml_file_dir = os.path.join(self.car_ws_path, "src/motion_planner/cfg/motion_planner.yaml")
             with open(delay_yaml_file_dir, 'r') as stream:
                 try:
                     self.delay_params = yaml.safe_load(stream)
@@ -188,7 +202,9 @@ class ControlCommand:
                     horizon_type = "nonunisparsevar"
                 else:
                     horizon_type = self.horizon_type
-                self.save_path_dir = f"/home/vialab/car_ws/src/MPC_Results_Gather/data/eval_test/{horizon_type}_{verdict}_{self.file_path_name}"
+                folder_for_save = "MPCSimulationRunner"
+                save_path_dir = os.path.join(self.car_ws_path, f"src/{folder_for_save}/data/eval_test")
+                self.save_path_dir = f"{save_path_dir}/{horizon_type}_{verdict}_{self.file_path_name}"
             
             pd.DataFrame(dataFrame).to_csv(self.save_path_dir)
             print(f"Data saved to {self.save_path_dir}")
@@ -426,13 +442,14 @@ class ControlCommand:
             #     self.heading_error_counter += 1
             
             # if self.vel_stuck_count > self.vel_stuck_count_threshold or self.heading_error_counter > self.heading_error_counter_threshold or self.mpc_solving_failure_counter > self.mpc_solving_failure_threshold or self.distance_error_violation:
+            timeout_file_dir = os.path.join(self.car_ws_path, "src/MPC_Results_Gather/data/eval_test/timeout.txt")
             if self.vel_stuck_count > self.vel_stuck_count_threshold or self.mpc_solving_failure_counter > self.mpc_solving_failure_threshold or self.distance_error_violation:
                 # Create a timeout file to save the data and exit
-                with open("/home/vialab/car_ws/src/MPC_Results_Gather/data/eval_test/timeout.txt", "w") as f:
+                with open(timeout_file_dir, "w") as f:
                     f.write("Timeout")        
             
             # Check if the timeout file exists (kill the program if it does)
-            if os.path.exists("/home/vialab/car_ws/src/MPC_Results_Gather/data/eval_test/timeout.txt"):
+            if os.path.exists(timeout_file_dir):
                 self.save_data()
                 sys.exit(0)
                 
@@ -471,5 +488,4 @@ if __name__ == "__main__":
         # Wait for a connection
         # TODO: Fix the connection to connect only one
         comm.recv_path(comm.sock)
-        comm.send_control_inputs(comm.sock)
-        # Save the data when the program is interrupted
+        comm.send_control_inputs(comm.sock)        

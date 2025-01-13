@@ -26,7 +26,21 @@ from tf.transformations import euler_from_quaternion
 from Helper import PathSmoother, GazeboHelper, GoalCheckerandGetter
 
 
+def get_car_ws_path():
+    """
+    Determines the car_ws path by navigating up from the current file's location.
+    """
+    current_file_path = os.path.abspath(__file__)
+    current_dir = os.path.dirname(current_file_path)
+    # Navigate up to car_ws/src
+    src_dir = os.path.abspath(os.path.join(current_dir, '..', '..'))
+    # Navigate up to car_ws
+    car_ws_path = os.path.abspath(os.path.join(src_dir, '..'))
+    return car_ws_path
+
+
 class MotionPlannerNode:
+    car_ws_path = get_car_ws_path()
     environ['OMP_NUM_THREADS'] = '6'
     def __init__(self, file_path=None, eval_mode=False):
         # Planner Options
@@ -43,23 +57,23 @@ class MotionPlannerNode:
         self.global_path_receive_flag = rospy.get_param('~global_path_receive_flag', True)
         self.global_path_receive_once = rospy.get_param('~global_path_receive_once', True)
         self.save_global_path = rospy.get_param('~save_global_path', True)
-        self.save_global_path_dir = self.basedir + '/car_ws/src/ackerman_ros_robot_gazebo_simulation/custom_controllers/ackermann-drive-teleop/script_for_mpc_prod/data/'
+        self.save_global_path_dir = os.path.join(self.car_ws_path, "src/ackerman_ros_robot_gazebo_simulation/custom_controllers/ackermann-drive-teleop/script_for_mpc_prod/data/")
         self.manual_path_generation = rospy.get_param('~manual_path_generation', True)
         if self.manual_path_generation:
-            self.save_global_path_dir = self.basedir + '/car_ws/path/'
+            self.save_global_path_dir = os.path.join(self.car_ws_path, '/car_ws/path/')
             cur_date = datetime.datetime.now().strftime("%Y%m%d_%H%M")
             self.save_global_path_dir = os.path.join(self.save_global_path_dir, "manual_generated_path")
             if not os.path.exists(self.save_global_path_dir):
                 os.makedirs(self.save_global_path_dir)
         self.smooth_the_path = rospy.get_param('~smooth_the_path', True)
         self.save_global_path_spline = rospy.get_param('~save_global_path_spline', True)
-        self.ros_global_planner_launch_dir = rospy.get_param('~ros_global_planner_launch_dir', self.basedir + '/nonlinear_mpc_sim/src/mpc_local_planner/mpc_local_planner_examples/launch/carlike_global_sim.launch')
-        self.goal_lists_dir = rospy.get_param('~goal_lists_dir', self.basedir + '/car_ws/src/motion_planner/scripts/data/parking_slot_locations.txt')
+        self.ros_global_planner_launch_dir = rospy.get_param('~ros_global_planner_launch_dir', os.path.join(self.car_ws_path, '/nonlinear_mpc_sim/src/mpc_local_planner/mpc_local_planner_examples/launch/carlike_global_sim.launch'))
+        self.goal_lists_dir = rospy.get_param('~goal_lists_dir',os.path.join(self.car_ws_path, 'src/motion_planner/scripts/data/parking_slot_locations.txt'))
         self.train_rl_model = rospy.get_param('~train_rl_model', False)
         self.mode = rospy.get_param('~mode', 'train')
-        self.path_hist_seed_dir = rospy.get_param('~path_hist_seed_dir', self.basedir + '/car_ws/src/motion_planner/logs/path_hist_seeds_target.txt')
-        self.path_hist_seed_idx_dir = rospy.get_param('~path_hist_seed_idx_dir', self.basedir + '/car_ws/src/motion_planner/logs/random_seed_index.csv')
-        self.path_hist_seed_file_dir = rospy.get_param('~path_hist_seed_file_dir', self.basedir + '/car_ws/src/motion_planner/logs/20240705_0811_train_S8/path_hist_seed.csv')
+        self.path_hist_seed_dir = rospy.get_param('~path_hist_seed_dir',os.path.join(self.car_ws_path, 'src/motion_planner/logs/path_hist_seeds_target.txt'))
+        self.path_hist_seed_idx_dir = rospy.get_param('~path_hist_seed_idx_dir',os.path.join(self.car_ws_path, 'src/motion_planner/logs/random_seed_index.csv'))
+        self.path_hist_seed_file_dir = rospy.get_param('~path_hist_seed_file_dir', os.path.join(self.car_ws_path, 'src/motion_planner/logs/20240705_0811_train_S8/path_hist_seed.csv'))
         self.reverse_path = True if self.mode == 'train' else False
         self.rerun_mpc_node_command = ""
         self.ref_x = None
@@ -94,7 +108,7 @@ class MotionPlannerNode:
             self.file_path = rospy.get_param('~path_file_dir', self.basedir + '/car_ws/path/20240404_0400/train/path_147.csv')
             file_path = None
         elif self.eval_mode:
-            path_file_folder = self.path_train_pre_dir + '/val'
+            path_file_folder = self.path_train_pre_dir + '/test' # val or test depending on the datasets naming
             self.file_path = os.path.join(path_file_folder, file_path)
         # ROS Waiting for the Odom Message (Count the number of messages received in the first determined time before using the message)
         # To avoid the first message to be used, because it sometimes contains wrong velocity values from the previous simulation
@@ -287,31 +301,17 @@ class MotionPlannerNode:
                 rospy.loginfo("Saving Global Path!")
                 column_names = ['ref_x', 'ref_y', 'ref_yaw']
                 data = np.array([self.ref_x, self.ref_y, self.ref_yaw]).T
-                path_file_name = self.basedir + "/car_ws/src/ackerman_ros_robot_gazebo_simulation/custom_controllers/ackermann-drive-teleop/script_for_mpc_prod/data/" + 'splined_path.csv'
+                path_file_name = os.path.join(self.car_ws_path, 'src/ackerman_ros_robot_gazebo_simulation/custom_controllers/ackermann-drive-teleop/script_for_mpc_prod/data/splined_path.csv')
                 np.savetxt(path_file_name, data, delimiter=',', header=','.join(column_names))            
             rospy.loginfo("Loaded Path from File!")
         if self.is_sim:
             self.gh = GazeboHelper.GazeboHelper()
             self.goal_setter = GoalCheckerandGetter.GoalCheckerandGetter()
             if not self.ref_path_load_from_file:
-                # 0.0615
-                # self.starting_pose = [-20.8261, -11.55, 0.0620, 0.0, 0.0, -0.1]
-                # self.starting_pose = [-20.8261, -11.55, 0.0620, 0.0, 0.0, 0.0]
-                # Starting pose 1 (Bottom right corner)
                 init_y_offset = np.random.uniform(-2.5, 2.5)
                 self.starting_pose = [29.997, -44.092+init_y_offset, 0.0620, 0.0, 0.0, 1.59]
-                # Starting pose 2 (Top right corner)
-                #self.starting_pose = [29.368, 14.068, 0.0620, 0.0, 0.0, -1.545]
-                # Middle Point (Center Parking Area)
                 init_x = np.random.uniform(0, 15)
-                #self.starting_pose = [init_x, 0.0, 0.0620, 0.0, 0.0, 3.14]
-                # Starting pose 3 (Origin)
-                #self.starting_pose = [0.0, 0.0, 0.0620, 0.0, 0.0, 0.0]
                 self.starting_vel = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-                # Starting pose 4 (Top left corner)
-                #self.starting_pose = [-8, 20.044, 0.0620, 0.0, 0.0, -1.58]
-                # Starting pose 5 (Bottom left corner)
-                # self.starting_pose = [-33.744, -12.153, 0.0620, 0.0, 0.0, -0.008]
             else:
                 # Set the starting pose to the first point of the reference path (prev z-axis default 0.097952)
                 self.starting_pose = [self.ref_x[0], self.ref_y[0], 0.0620, 0.0, 0.0, self.ref_yaw[0]]
@@ -445,21 +445,16 @@ class MotionPlannerNode:
             rospy.loginfo("Move Base Client is Ready")
             rospy.loginfo("Sending Goal to Move Base!")
             # Sending randomized goal points
-            # goal_points = [23.5, 0.5, -0.0162]
-            # goal_points = parking_slot_goal[parking_slot,1:4]
             # Top-left corner goal points (staright)
             goal_points = [-8, 5.044, -1.58]
             # Bottom-left corner goal points (straight path)
             goal_points = [-17.744, -12.153, -0.008]
-            # goal_points = [23.5, -1.5, -0.0162]
             if self.ref_path_load_from_file:
                 goal_points = [self.goal_pose[0], self.goal_pose[1], self.ref_yaw[-1]]
             if self.train_rl_model:
                 self.halt_car()
                 sample_y_pos = np.random.uniform(0.5, -1.5)
                 goal_points = [23.5, sample_y_pos, -0.0162]
-            #parking_slot = np.random.choice([7, 8, 9, 10, 11, 12, 13, 14, 15])
-            #goal_points = self.goal_point_list[parking_slot-1,1:4]
             if self.manually_set_goal:
                 # Waiting path to be available by setting the goal manually
                 while self.ref_x is None and self.ref_y is None and self.ref_yaw is None:
@@ -476,9 +471,6 @@ class MotionPlannerNode:
                 self.client.send_goal(goal_points_msg)
             rospy.loginfo("Trajectory Generation Started!")
             self.send_goal_to_move_base = False
-        # start_path_generation = self.cur_pose is not None and self.cur_speed is not None and self.ref_x is not None and self.ref_y is not None and self.ref_path is not None and (self.first_time or self.first_control_received)                
-        # rospy.loginfo("Start Path Generation ?: " + str(start_path_generation))
-        # rospy.loginfo("First Control Received: " + str(self.first_control_received))
         if self.cur_pose is not None and self.cur_speed is not None and self.ref_x is not None and self.ref_y is not None and self.ref_path is not None and (self.first_time or self.first_control_received):
             # rospy.loginfo("Path Generation Started!")
             s0, l0 = self.XY_2_SL(self.cur_pose[0], self.cur_pose[1], calculate_cur_pos=True)
@@ -541,18 +533,6 @@ class MotionPlannerNode:
             msg.data = goal_reached
             self.goal_reached_mp.publish(msg)                
             try:
-                # Check if the path size is at least same as the MIN_T / DT
-                # rospy.loginfo("Total Path {}".format((self.lattice_planner.MIN_T / self.lattice_planner.T_STEP)))
-                # if len(self.path.x) < (self.lattice_planner.MIN_T / self.lattice_planner.T_STEP):
-                #     # If not, then extend the path using the last point
-                #     if self.DEBUG:
-                #         rospy.loginfo("Length of Path: %s", len(self.path.x))
-                #     self.path.x.extend([self.path.x[-1]] * (int((self.lattice_planner.MIN_T/self.lattice_planner.T_STEP)) - len(self.path.x)))
-                #     self.path.y.extend([self.path.y[-1]] * (int((self.lattice_planner.MIN_T/self.lattice_planner.T_STEP)) - len(self.path.y)))
-                #     self.path.yaw.extend([self.path.yaw[-1]] * (int((self.lattice_planner.MIN_T/self.lattice_planner.T_STEP)) - len(self.path.yaw)))
-                #     self.path.s_v.extend([self.path.s_v[-1]] * (int((self.lattice_planner.MIN_T/self.lattice_planner.T_STEP)) - len(self.path.s_v)))                    
-                #     self.path.curv.extend([self.path.curv[-1]] * (int((self.lattice_planner.MIN_T/self.lattice_planner.T_STEP)) - len(self.path.curv)))
-                
                 # Calculate the desired length
                 desired_length = max(len(self.path.x), len(self.path.y), len(self.path.yaw), len(self.path.s_v), len(self.path.curv))
 
@@ -566,18 +546,13 @@ class MotionPlannerNode:
                     rospy.loginfo("Length of Path After y: %s", len(self.path.y))
                 # Clip to make sure the vref is within the target speed limits
                 self.path.s_v = np.clip(self.path.s_v, -self.lattice_planner.TARGET_SPEED, self.lattice_planner.TARGET_SPEED)
-                # rospy.loginfo("V Ref: ", self.path.s_v)
                 rospy.loginfo("Generated Path!, Length of Path: %s", len(self.path.x))
                 self.path.curv = np.clip(self.path.curv, -self.lattice_planner.MAX_CURVATURE, self.lattice_planner.MAX_CURVATURE)
                 # Convert to ROS Path
                 ref_x = State()
                 ref_x.data = self.path.x
-                # rospy.loginfo("Total distance x: ", np.sum(np.gradient(ref_x.data)))
-                # rospy.loginfo("Distance from start to end x: ", ref_x.data[-1] - ref_x.data[0])
                 ref_y = State()
                 ref_y.data = self.path.y
-                # rospy.loginfo("Total distance y: ", np.sum(np.gradient(ref_y.data)))
-                # rospy.loginfo("Distance from start to end y: ", ref_y.data[-1] - ref_y.data[0])
                 ref_yaw = State()
                 ref_yaw.data = self.path.yaw
                 ref_v = State()
@@ -587,8 +562,6 @@ class MotionPlannerNode:
                 if self.DEBUG:
                     rospy.loginfo("Length of ref x: %d", len(self.path.x))
                     rospy.loginfo("Length of ref y: %d", len(self.path.y))
-                # rospy.logwarn("First 8 of Reference Yaw: %s", self.path.yaw[:8])
-                # rospy.logwarn("First 8 of Reference Speed: %s", self.path.s_v[:8])
                 ref_path = Local_path()
                 ref_path.header.stamp = rospy.Time.now()
                 ref_path.ref_state.append(ref_x)
@@ -752,9 +725,6 @@ if __name__ == '__main__':
     else:
         # Define the reference path directory
         file_path_dir = None
-    # else:
-    #     file_path_dir = None
-    #     eval_mode = False
     motion_planner = MotionPlannerNode(file_path=file_path_dir, eval_mode=eval_mode)
     rospy.sleep(3)
     rate = rospy.Rate(10)

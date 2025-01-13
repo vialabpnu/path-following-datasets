@@ -1,14 +1,11 @@
-#!/usr/bin/env python2.7
 import argparse
 import socket
 import atexit
 import os
 import math
 import time
-import csv
 import logging
 
-import pandas as pd
 import numpy as np
 import rospy
 import tf
@@ -17,8 +14,14 @@ from ackermann_msgs.msg import AckermannDriveStamped
 from motion_planner.msg import Local_path
 from helper import GazeboSimHelper
 from std_msgs.msg import Bool
-from nav_msgs.msg import Odometry, Path
+from nav_msgs.msg import Odometry
 
+
+# This node handles communication between the MPC controller (running in a separate process)
+# and the ROS environment. It receives odometry information from the simulator, sends it 
+# to the MPC controller via a socket connection, and then publishes the received control commands
+# to the vehicle. It also handles synchronization with the simulator and other modules 
+# (like SLM-Lab for RL) if necessary.
 
 pub = rospy.Publisher("/rbcar_robot_control/command", AckermannDriveStamped, queue_size=1)
 pub_log = rospy.Publisher("/mpc_command", AckermannDriveStamped, queue_size=1)
@@ -27,8 +30,6 @@ pub_first_mpc_control_published = rospy.Publisher("/first_mpc_control_published"
 
 t = 0
 t_count = 0
-time_cum_odom = 0
-time_cum_socket = 0
 path_temp = None
 oa, odelta = None, None
 ref_x, ref_y, ref_yaw = None, None, None
@@ -36,18 +37,15 @@ ref_v = None
 ref_curv = None
 goal_pose = None
 goal_verdict = None
-read_path = True
 path_global = None
 path_change = True
+car_ws_path = None
 path = None
 stop_signal = False
-is_sim = True
-t_stop = 0
-stop = False
 WB = 2.48
 activate = False
 use_motion_planner = True
-train_rl_model = False
+sync_sim = True  # For synchronizing the simulation (e.g., with Gazebo or an RL environment). If not using simulation, set to False
 combine_velocity = False
 halt_car_active = True
 halt_car_count = 0
@@ -57,19 +55,13 @@ save_computation_time = True
 first_control_obtained = False
 f = None
 
-# pub = rospy.Publisher("/ack_cmd", AckermannDriveStamped, queue_size=1)
-
-
-# Gazebo Service Helper
 gazebo_helper = GazeboSimHelper.GazeboSimControl()
 
 HEADERSIZE = 10
 BUFFERSIZE = 100000
 PORT = 12345
 
-HEADERSIZE = 10
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-# Set the timeout for the socket
 sock.settimeout(240)
 ipaddress = socket.gethostname()
 
@@ -83,12 +75,6 @@ def get_path_from_motion_planner(msg):
     ref_curv = msg.ref_state[4].data
     goal_pose = msg.goal_pose
     goal_verdict = msg.goal_reached
-    
-    # print("Goal Verdict: ", goal_verdict)
-    # rospy.loginfo("Ref x size: %s", ref_x)
-    # rospy.loginfo("Ref y size: %s", ref_y)
-    # rospy.loginfo("Ref v size: %s", ref_v)
-    # rospy.loginfo("Ref Curvature size: %s", ref_curv)
     
     
 # Getting Goal Verdict from the motion planner
@@ -116,13 +102,6 @@ def control_loop_cb(odom):
         if halt_car_count < halt_car_count_threshold:
             halt_car_once()
             halt_car_count += 1
-            # # if the car is moving in the beginning, halt the car
-            # if np.abs(v_long) > 0.1:
-            #     # Halt the car
-            #     halt_car_once()
-            # else:
-            #     # If the car is not moving, increment the count and wait until the maximum count is reached
-            #     halt_car_count += 1
         else:
             rospy.logwarn("Waiting for the path from the motion planner")
             halt_car_active = False
@@ -263,19 +242,13 @@ def halt_car_during_exit():
     
 
 def socket_sending_mpc(path, current_state, vehicle_control, goal_pose=None, goal_verdict=None):
-    global train_rl_model, ref_curv, sock, HEADERSIZE, BUFFERSIZE, ipaddress, PORT, f, eval_mode, save_computation_time, first_control_obtained
+    global train_rl_model, ref_curv, sock, HEADERSIZE, BUFFERSIZE, ipaddress, PORT, f, eval_mode, save_computation_time, first_control_obtained, car_ws_path
 
-    print("Received path curve length in MPC Node ", len(ref_curv))
-    # print("Current State length in MPC Node", len(current_state))      
-    print("Current state in MPC", current_state)
     path_len = path.shape[0] * path.shape[1] + len(ref_curv)
     path_len_arr = np.array([path_len], dtype=np.float32)
-    print("Path Length to send: ", path_len_arr)
     path_flat = path.flatten()
     ref_curv_flat = np.array(ref_curv, dtype=np.float32).flatten()
     vehicle_state = np.array(current_state, dtype=np.float32).flatten()
-    # print("Current State length to be sent in MPC Node ", vehicle_state.shape)    
-    # rospy.loginfo("Goal Verdict %s", goal_verdict)
     if goal_pose is not None and goal_verdict is not None:
         goal_pose = np.array(goal_pose, dtype=np.float32).flatten()
         goal_verdict = 1 if goal_verdict else 0
@@ -283,24 +256,20 @@ def socket_sending_mpc(path, current_state, vehicle_control, goal_pose=None, goa
         data = np.hstack((path_len_arr, path_flat, ref_curv_flat, vehicle_state, goal_pose, goal_verdict))
     else:
         data = np.hstack((path_len_arr, path_flat, vehicle_state))
-    # print("Data size to be sent from MPC ", data.shape)
     data = data.tobytes()
 
     msg = bytes('{:<{}}'.format(len(data), HEADERSIZE).encode("utf-8")) + data
     if train_rl_model:
         # Pause the simulation to wait for the control inputs
         gazebo_helper.pause()
-        # rospy.loginfo("Gazebo simulation paused")
     count_start = time.time()
     sock.sendto(msg, (ipaddress, PORT))
-    # print("Waiting for the control inputs from the MPC server")
     # Receive the calculated control inputs from the MPC server
     data_raw = sock.recvfrom(BUFFERSIZE)
     count_end = time.time()
     time_total_mpc = count_end - count_start
     if save_computation_time:
         f.write(str(time_total_mpc) + '\n')
-    print("Total Computation time For Solving MPC: ", time_total_mpc)
     gazebo_helper.unpause()
     # print("Control inputs received")
     if data_raw:
@@ -324,11 +293,6 @@ def socket_sending_mpc(path, current_state, vehicle_control, goal_pose=None, goa
     vehicle_control.drive.speed = ov
     vehicle_control.drive.jerk = ojerk
     
-    
-    # To tell that the first control command is ready (for synchronization with the motion planner)
-    is_first_mpc_control_published = Bool(True)
-    # pub_first_mpc_control_published.publish(is_first_mpc_control_published)
-    
     if not first_control_obtained:
         # Write a text file to indicate that the first control command is obtained
         base_dir = os.environ.get('BASE_DIR')
@@ -336,9 +300,9 @@ def socket_sending_mpc(path, current_state, vehicle_control, goal_pose=None, goa
             if base_dir != '':
                 first_control_file = os.path.join(os.environ.get('BASE_DIR'), 'car_ws/src/motion_planner/scripts/control_flag/first_control_obtained.txt')
             else:
-                first_control_file = '/car_ws/src/motion_planner/scripts/control_flag/first_control_obtained.txt'
+                first_control_file = os.path.join(car_ws_path, 'src/motion_planner/scripts/control_flag/first_control_obtained.txt')
         else:
-            first_control_file = '/home/vialab/car_ws/src/motion_planner/scripts/control_flag/first_control_obtained.txt'
+            first_control_file = 
         with open(first_control_file, 'w') as fs:
             fs.write('1')
     return vehicle_control, stop_signal
@@ -346,7 +310,7 @@ def socket_sending_mpc(path, current_state, vehicle_control, goal_pose=None, goa
 
 @atexit.register
 def close_file_and_wrap_up():
-    global f, save_computation_time
+    global f, save_computation_time, car_ws_path
     halt_car_during_exit()
     if save_computation_time:
         f.close()
@@ -357,9 +321,9 @@ def close_file_and_wrap_up():
             if base_dir != '':
                 first_control_file = os.path.join(os.environ.get('BASE_DIR'), 'car_ws/src/motion_planner/scripts/control_flag/first_control_obtained.txt')
             else:
-                first_control_file = '/car_ws/src/motion_planner/scripts/control_flag/first_control_obtained.txt'
+                first_control_file = os.path.join(car_ws_path, 'src/motion_planner/scripts/control_flag/first_control_obtained.txt')
         else:
-            first_control_file = '/home/vialab/car_ws/src/motion_planner/scripts/control_flag/first_control_obtained.txt'
+            first_control_file = os.path.join(car_ws_path, 'src/motion_planner/scripts/control_flag/first_control_obtained.txt')
         if os.path.exists(first_control_file):
             # remove the file
             os.remove(first_control_file)
@@ -368,10 +332,23 @@ def close_file_and_wrap_up():
     pass
 
 
+def get_car_ws_path():
+    """
+    Determines the car_ws path by navigating up from the current file's location.
+    """
+    current_file_path = os.path.abspath(__file__)
+    current_dir = os.path.dirname(current_file_path)
+    # Navigate up to car_ws/src
+    src_dir = os.path.abspath(os.path.join(current_dir, '..', '..', '..', '..'))
+    # Navigate up to car_ws
+    car_ws_path = os.path.abspath(os.path.join(src_dir, '..'))
+    return car_ws_path
+
+
 def main():
-    global use_motion_planner
+    global use_motion_planner, car_ws_path
     
-    # For Golf Cart
+    car_ws_path = get_car_ws_path()
     sub = rospy.Subscriber("/INS/odom", Odometry, control_loop_cb, queue_size=1)
 
     if use_motion_planner:
@@ -379,7 +356,6 @@ def main():
         sub_goal = rospy.Subscriber("/path_motion_planner/goal_reached", Bool, get_goal_from_mp_cb, queue_size=1)
     else:
         # get_path_from_file()
-        # sub_parking_path = rospy.Subscriber("/pathGenerator/parkingPath", Path, get_path_steer_cb, queue_size=1)
         sub_activate = rospy.Subscriber("/activate_lmpc", Bool, activate_lmpc_cb, queue_size=1)
 
     rospy.spin()
