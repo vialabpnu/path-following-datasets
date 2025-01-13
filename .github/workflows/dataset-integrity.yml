@@ -30,11 +30,11 @@ jobs:
 
       - name: Calculate checksums for train data
         run: |
-          find ./train -name "*.csv" -type f -exec sha256sum {} \; > new_checksums_train.txt
+          find train -name "*.csv" -type f -exec sha256sum {} \; > new_checksums_train.txt
 
       - name: Calculate checksums for test data
         run: |
-          find ./test -name "*.csv" -type f -exec sha256sum {} \; > new_checksums_test.txt
+          find test -name "*.csv" -type f -exec sha256sum {} \; > new_checksums_test.txt
 
       - name: Compare train checksums
         run: diff checksums_train.txt new_checksums_train.txt
