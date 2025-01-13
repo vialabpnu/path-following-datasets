@@ -1,0 +1,1 @@
+/home/vialab/Bili/PathPlanningDatasets/path-following-datasets/examples/car_ws/devel/.private/motion_planner/share/common-lisp/ros/motion_planner/msg/_package_Local_path.lisp

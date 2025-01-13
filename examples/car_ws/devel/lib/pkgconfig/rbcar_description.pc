@@ -1,0 +1,1 @@
+/home/vialab/Bili/PathPlanningDatasets/path-following-datasets/examples/car_ws/devel/.private/rbcar_description/lib/pkgconfig/rbcar_description.pc

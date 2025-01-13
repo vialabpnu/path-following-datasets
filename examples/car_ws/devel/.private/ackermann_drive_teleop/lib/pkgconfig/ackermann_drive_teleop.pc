@@ -1,0 +1,8 @@
+prefix=/home/vialab/Bili/PathPlanningDatasets/path-following-datasets/examples/car_ws/devel/.private/ackermann_drive_teleop
+
+Name: ackermann_drive_teleop
+Description: Description of ackermann_drive_teleop
+Version: 0.0.0
+Cflags: -I/home/vialab/Bili/PathPlanningDatasets/path-following-datasets/examples/car_ws/src/ackerman_ros_robot_gazebo_simulation/custom_controllers/ackermann-drive-teleop/scripts
+Libs: -L${prefix}/lib 
+Requires: rospy ackermann_msgs motion_planner

@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/vialab/Bili/PathPlanningDatasets/path-following-datasets/examples/car_ws/devel/.private/rbcar_joystick/setup.sh

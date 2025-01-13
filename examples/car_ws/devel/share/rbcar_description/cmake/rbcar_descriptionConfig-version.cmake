@@ -1,0 +1,1 @@
+/home/vialab/Bili/PathPlanningDatasets/path-following-datasets/examples/car_ws/devel/.private/rbcar_description/share/rbcar_description/cmake/rbcar_descriptionConfig-version.cmake

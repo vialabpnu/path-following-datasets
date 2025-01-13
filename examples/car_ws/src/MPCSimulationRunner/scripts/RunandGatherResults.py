@@ -35,24 +35,27 @@ def shutdown_sim(process_list, gracetime_s=0.1):
 
 
 class RunandGatherResults:
-    def __init__(self, config_file):
+    def __init__(self, config_file: str, current_workspace_dir: str, current_dataset_dir: str) -> None:
         self.mpc_sampling_params = ['fsmpc', 'uniform']
         self.run_command = config_file['run_command']
         self.run_command_mpc_server = self.run_command['mpc_server']
         self.run_command_mpc_node = self.run_command['mpc_node']
         self.run_command_motion_planner = self.run_command['motion_planner']
         self.run_unpause_physics = self.run_command['unpause_physics']
+        self.current_workspace_dir = current_workspace_dir
+        self.current_dataset_dir = current_dataset_dir
         self.timeout = config_file['timeout']
         self.path_files = config_file['path_files']
         self.user_prefix = config_file['user_prefix_path']
         self.workspace_list = config_file['workspace_list'][0]
         self.sleep_list = config_file['sleep_list']
-        self.path_files_list = os.listdir(os.path.join(self.user_prefix, self.workspace_list, self.path_files))
+        self.path_files_list = self.current_dataset_dir + '/' + self.path_files 
+        self.path_files_list = os.listdir(self.path_files_list)
         self.path_files_list = [path_file for path_file in self.path_files_list if path_file.endswith('.csv')]
         self.count_path_files = len(self.path_files_list)
         self.eval_results_path = config_file['eval_results_path']
         self.current_time = datetime.datetime.now().strftime("%Y%m%d_%H%M")
-        self.eval_results_path = os.path.join(self.user_prefix, self.workspace_list, self.eval_results_path)
+        self.eval_results_path = self.current_workspace_dir + self.eval_results_path
         self.eval_results_path_target = os.path.join(self.eval_results_path, self.current_time)
         self.process_list = []
         self.gazebo_reset_command = "rosservice call /gazebo/reset_simulation {}"
@@ -162,11 +165,17 @@ class RunandGatherResults:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    default_path = '/home/vialab/car_ws/src/MPC_Results_Gather/config/config_run_gather.yaml'
+    # Get the path to the CAR_WS_PATH environment variable
+    car_ws_path = os.environ.get('CAR_WS_PATH')
+    datasets_path = os.environ.get('DATASET_PATH')
+    # Convert the path to a string
+    car_ws_path = str(car_ws_path)
+    datasets_path = str(datasets_path)
+    default_path = os.path.join(car_ws_path, 'src/MPCSimulationRunner/config/config_run_gather.yaml')
     parser.add_argument('--config_file', type=str, default=default_path, help='Path to the configuration file', required=False)
     config_file_path = parser.parse_args().config_file
     config_file = yaml.safe_load(open(config_file_path, 'r'))
-    run_and_gather_results = RunandGatherResults(config_file)
+    run_and_gather_results = RunandGatherResults(config_file, car_ws_path, datasets_path)
     run_and_gather_results.run_simulation()
     logging.info("Results Gathering is Done!")
     

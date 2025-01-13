@@ -1,0 +1,8 @@
+prefix=/home/vialab/Bili/PathPlanningDatasets/path-following-datasets/examples/car_ws/devel/.private/rbcar_description
+
+Name: rbcar_description
+Description: Description of rbcar_description
+Version: 1.0.5
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

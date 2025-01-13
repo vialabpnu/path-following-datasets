@@ -1,0 +1,8 @@
+prefix=/home/vialab/Bili/PathPlanningDatasets/path-following-datasets/examples/car_ws/install
+
+Name: odom_reduced
+Description: Description of odom_reduced
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

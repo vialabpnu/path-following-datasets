@@ -305,24 +305,6 @@ class SimpleTrajPlanning:
 			selectedDecelIdx = decelSpeedIdxForPreferenceSpeed
 			speedProf = np.concatenate([decelSpeedProfile[:decelSpeedIdxForPreferenceSpeed], np.array([RefAccelSpeedProfile[-1]]*constantSpeedStepNum), decelSpeedProfile[decelSpeedIdxForPreferenceSpeed:]], axis=None)
 
-		# # Compensate the remaining distance caused by discrete time step
-		# resultDist = SimpleTrajPlanning.getDistFromSpeedProfile(speedProf, dt)
-		# distRemainFineAdjust = dist - resultDist[-1]
-		#
-		# # Search for decel speed that can travel N steps within distRemainFineAdjust
-		# curDecelIdxFineAdjust = decelSpeedProfile.shape[0] - 1
-		# stepToTravelInFineAdjust = 5
-		# while curDecelIdxFineAdjust >= selectedDecelIdx and distRemainFineAdjust >= stepToTravelInFineAdjust * dt*decelSpeedProfile[curDecelIdxFineAdjust]:
-		# 	curDecelIdxFineAdjust -= 1
-		# curDecelIdxFineAdjust = curDecelIdxFineAdjust + 1 if curDecelIdxFineAdjust < decelSpeedProfile.shape[0] - 1 else decelSpeedProfile.shape[0] - 1
-		# if decelSpeedProfile[curDecelIdxFineAdjust] > 0:
-		# 	stepToTravelInFineAdjustActual = int(distRemainFineAdjust / (dt*decelSpeedProfile[curDecelIdxFineAdjust]))
-		# else:
-		# 	stepToTravelInFineAdjustActual = 0
-		#
-		# speedProfFineAdjust = np.concatenate([speedProf[:-(len(decelSpeedProfile)-1-curDecelIdxFineAdjust)], np.array([decelSpeedProfile[curDecelIdxFineAdjust]]*stepToTravelInFineAdjustActual), speedProf[-(len(decelSpeedProfile)-1-curDecelIdxFineAdjust):]], axis=None)
-		#
-		# # Check distance again
 		# resultDistFineAdjust = SimpleTrajPlanning.getDistFromSpeedProfile(speedProfFineAdjust, dt)
 		speedProf[0] = curSpeed
 		return speedProf
@@ -348,12 +330,6 @@ class LinearMPC:
         self.NU = 2
         self.N = N # 1 (Current State) + 10 (Future State/Prediction Horizon)
         print(f"self.N: {self.N}")
-
-        # FIXED PARAMS
-        # TESTING 1
-        # self.R_curve = np.diag([0.01, 0.00147003173])
-        # self.Rd_curve = np.diag([0.01, 0.05])
-        # self.Q_curve = np.diag([2.0, 2.0, 12.0, 0.75])
         
         self.R_straight = np.diag([0.01, 0.01])
         self.Rd_straight = np.diag([0.01, 0.00])
@@ -369,14 +345,12 @@ class LinearMPC:
         self.GOAL_DIS_Y = 0.5
         self.STOP_MPC_X = 1.00 # Set this value larger or equal to the X axis Goal Distance
         self.STOP_MPC_Y = 1.00 # Set this value larger or equal to the Y axis Goal Distance
-        # self.STOP_SPEED = 0.028 # [m/s]
         self.STOP_SPEED = 0.075 # [m/s]
         self.MAX_TIME = 500.0
 
         self.MAX_CURVE = 0.2 # [m]
 
         ####################### Change the speed related parameters here ###################################
-        # self.TARGET_SPEED = 0.888 # [m/s]
         self.TARGET_SPEED = 4.4/3.6 #1.111 # [m/s]
         self.ACCEL_REF = 0.6 #1.0 # [m/s^2]
         self.DECEL_REF = 0.6 #1.0 # [m/s^2]
@@ -447,12 +421,6 @@ class LinearMPC:
             self.Nn = self.Nn_max
             self.DT_array = None
             self.DT_array = self.scale_dt(type=self.type)
-            # # K-Uniform MPC (FSM-MPC 6)
-            # self.K_SCALE = 8
-            # self.total_horizon = 8
-            # self.sparse_horizon = 2
-            # # self.DT_array = np.array([self.DT_MIN * self.K_SCALE] * (self.N - 1))
-            # self.DT_array = np.array([self.DT_MIN] * (self.total_horizon - self.sparse_horizon) + [self.DT_MAX] * self.sparse_horizon)
             print(f"DT_array: {self.DT_array}")
 
         self.x = None
@@ -703,8 +671,6 @@ class LinearMPC:
         # Final horizon state constraints
         cost += cp.quad_form(xref[:, self.N - 1] - self.x[:, self.N - 1], Qf)
 
-        # logging.info(f"Current Speed: {x0[2]}")
-        # logging.info(f"Current Reference Speed: {xref[2, :]}")
         # If the speed below the golf cart threshold
         if np.abs(x0[2]) < self.MIN_SPEED_TO_MOVE:
             self.MAX_ACCEL = 1.5
@@ -712,9 +678,6 @@ class LinearMPC:
         elif np.abs(x0[2]) >= self.MIN_SPEED_TO_MOVE:
             self.MAX_ACCEL = 1.5
             self.MAX_DECEL = -1.5
-
-        # print(f"MAXIMUM ACCELERATION {self.MAX_ACCEL}")
-        # print(f"MAXIMUM DECELERATION {self.MAX_DECEL}")
 
         constraints += [self.x[:, 0] == x0]
         constraints += [self.x[2, self.ALPHA:] <= self.MAX_SPEED]
@@ -745,7 +708,6 @@ class LinearMPC:
             if prob.status == cp.OPTIMAL or prob.status == cp.OPTIMAL_INACCURATE:
                 ox, oy, ov, oyaw = self.x.value[0, :].flatten(), self.x.value[1, :].flatten(), \
                                 self.x.value[2, :].flatten(), self.x.value[3, :].flatten()
-                # logging.info(f"Acceleration: {self.u.value[0, :].flatten()}")
                 # Make sure the control input is not out of the limit
                 oa, odelta = np.clip(self.u.value[0, :], self.MAX_DECEL, self.MAX_ACCEL), np.clip(
                     self.u.value[1, :], -self.MAX_STEER, self.MAX_STEER)
@@ -754,9 +716,7 @@ class LinearMPC:
                 self.optim_cost = prob.value
                 self.objective_cost = self.optim_cost
                 self.control_cost = np.sum(self.u.value[:, :].T ** 2 @ R)
-                # self.control_cost_different_way = np.sum(self.u.value[:, :].T @ R * self.u.value[:, :].T)
                 self.control_diff_cost = np.sum((self.u.value[:, 1:] - self.u.value[:, :-1]).T ** 2 @ Rd)
-                # self.control_diff_cost_different_way = np.sum((self.u.value[:, 1:] - self.u.value[:, :-1]).T @ Rd * (self.u.value[:, 1:] - self.u.value[:, :-1]).T)
                 self.state_cost_calc = np.sum((xref - self.x.value[:, :]).T ** 2 @ Q)
                 self.objective_cost_calc = self.state_cost_calc + self.control_cost + self.control_diff_cost
                 self.state_cost = self.objective_cost - self.control_cost - self.control_diff_cost
@@ -772,11 +732,8 @@ class LinearMPC:
                     self.control_accel_diff_cost = np.sum((self.u.value[0, 1:] - self.u.value[0, :-1]) ** 2 * Rd[0, 0])
                     self.control_steer_diff_cost = np.sum((self.u.value[1, 1:] - self.u.value[1, :-1]) ** 2 * Rd[1, 1])
                 # Steering smoother
-                # print(f"Acceleration {oa}")
-                # print(f"Steering before smoothing {odelta}")
                 if self.use_steering_smoother:
                     odelta = self.smooth_steering_shift(prev_od, odelta, self.N - 1, self.BETA)
-                # print(f"Steering after smoothing {odelta}")
                 self.prev_u[0,:] = oa
                 self.prev_u[1,:] = odelta           
             else:
@@ -870,10 +827,7 @@ class LinearMPC:
                     self.DT_array = self.scale_dt(type=self.type)
             # Obtain the reference path according to the sample time
             ## Test consistency of sampling time from DRL (K-Uniform MPC)
-            # self.DT_array = np.array([self.DT_MIN * self.K_SCALE] * (self.N - 1))
-            # use_sample_time = False if self.type == "uniform" else True
             # Apply FSM-MPC
-            # self.DT_array = np.array([self.DT_MIN] * (self.total_horizon - self.sparse_horizon) + [self.DT_MAX] * self.sparse_horizon)
             use_sample_time = True
             if use_sample_time:
                 DT_idx_sum = np.cumsum(self.DT_array)
@@ -888,16 +842,12 @@ class LinearMPC:
                 path_idx_range = DT_idx
             else:
                 path_idx_range = range(self.last_idx, self.last_idx + self.N - 1)
-            #print("reference path", path_data)
-            #print("Path index range", path_idx_range)
             xref = np.array([path_data[0][path_idx_range], path_data[1][path_idx_range], path_data[2][path_idx_range], path_data[3][path_idx_range]])            
-            #print("reference path", xref)
             # Match curvature data to the last horizon reference path
             if receive_curvature:
                 self.last_horizon_curvature = path_curve[path_idx_range[-1]]
         
         # Calculate curvature for the node
-        # ck = self.calculate_curvature(xref[0, :], xref[1, :])
 
         # Calculate the goal and stop flag distance
         isstop = (abs(vehicle_state.v) <= self.STOP_SPEED)
@@ -934,10 +884,7 @@ class LinearMPC:
             oyaw = np.ones((1, self.N)).flatten() * current_state[3]
             ov = float(ov[0])
 
-            # ---------------Sungil update---------------230117
             self.prev_oa = oa[0]
-            # self.setup_parking_mpc()
-            # ---------------End update---------------230117
 
             return ox, oy, oyaw, oa, odelta, ov, isstop, isgoal, xref
             
@@ -972,14 +919,12 @@ class LinearMPC:
         # Calculate the MPC (During normal operation)
         if not self.halt_mpc:
             start = time.time()
-            # logging.warn("First 8 Reference Yaw inside of MPC before transformation %s", xref[3, :8])
             # Copy reference yaw for transformation
             yaw_ref = xref[3, :].copy()
             heading_error, transformed_heading, transformed_heading_ref = self.adjust_heading_error(current_state[3], yaw_ref)
             logging.warn("Heading Error %s", heading_error)
             transformed_xref = np.array([xref[0, :], xref[1, :], xref[2, :], transformed_heading_ref])
             transformed_current_state = [current_state[0], current_state[1], current_state[2], transformed_heading]
-            # logging.warn("First 8 Reference Yaw inside of MPC after transformation %s", transformed_xref[3, :8])
             oa, odelta, ox, oy, oyaw, ov = self.calc_linear_mpc_control(transformed_xref, transformed_current_state, a, delta)
             print(f"Total time for MPC {time.time() - start}")
             if oa is None or odelta is None:
@@ -1001,7 +946,6 @@ class LinearMPC:
             isstop = True
             isgoal = True
             self.prev_oa = oa[0]
-            # self.PARKING_MODE = True
             oa_send = oa[0]
             
         ov = current_state[2] + self.DT * oa_send
@@ -1268,7 +1212,6 @@ class LinearMPC:
                     heading_ref[i] = heading_ref[i] - 2*np.pi
             # Calculate the heading error and adjust it to be within the range [-pi, pi]
             heading_error = heading_ref[0] - heading
-            # heading_error = np.mod(heading_error + np.pi, 2 * np.pi) - np.pi
         else:
             heading_error = heading_error
             
