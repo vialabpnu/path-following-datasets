@@ -13,9 +13,20 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Fetch complete repository history
+
+      - name: Print working directory before cd
+        run: pwd
 
       - name: Change directory to data
         run: cd path_datasets
+
+      - name: Print working directory after cd
+        run: pwd
+
+      - name: List directory contents
+        run: ls -l path_datasets 
 
       - name: Calculate checksums for train data
         run: |
