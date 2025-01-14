@@ -96,9 +96,13 @@ cd path-following-datasets
 ./install_dependencies_ros.sh
 
 # Navigate to the examples directory
-cd examples
+cd examples/car_ws
+
+# Build the Workspace
+catkin build
 
 # Run the simulator
+cd ..
 ./runSimulator.sh
 ```
 
