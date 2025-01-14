@@ -49,7 +49,7 @@ path_datasets
 └── test
     ├── M_Path996_PB.csv
     ├── H_Path1047_PB.csv
-    └── ... 
+    └── ...
 
 The dataset is provided in CSV file format. Each CSV file represents a single path and contains the following columns information:
 
@@ -99,7 +99,7 @@ cd path-following-datasets
 ./runSimulator.sh
 ```
 
-After running these commands, the simulation saves its logs to the examples/car_ws/src/MPCSimulationRunner/data/eval_test directory.
+```After running these commands, the simulation saves its logs to the examples/car_ws/src/MPCSimulationRunner/data/eval_test directory.```
 
 <!-- **Running through Docker:**
 We also provide a Docker image with all the necessary dependencies pre-installed.
