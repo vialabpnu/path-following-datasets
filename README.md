@@ -39,8 +39,8 @@ The paths in this dataset were generated using the Hybrid A* algorithm. This alg
 The algorithm was applied to the HD map of PNU's parking lot and a slope map built in the Physics Building to generate a diverse set of paths with varying difficulty levels.
 
 ## Dataset Format
-
 The dataset is organized in the following folder structure:
+```
 path_datasets
 ├── train
 │   ├── E_Path388_EE.csv
@@ -50,8 +50,9 @@ path_datasets
     ├── M_Path996_PB.csv
     ├── H_Path1047_PB.csv
     └── ...
+```
 
-The dataset is provided in CSV file format. Each CSV file represents a single path and contains the following columns information:
+The dataset is provided in CSV file format with its metadata. Each CSV file represents a single path and contains the following columns information:
 
 * **ref_x:**  The x-coordinate of the reference path (in meters).
 * **ref_y:** The y-coordinate of the reference path (in meters).
@@ -89,17 +90,19 @@ This section provides examples of how to use the path-following datasets.
 cd ~
 git clone git@github.com:vialabpnu/path-following-datasets.git
 
-# Navigate to the examples directory
 cd path-following-datasets
 
 # Install ROS dependencies
 ./install_dependencies_ros.sh
 
+# Navigate to the examples directory
+cd examples
+
 # Run the simulator
 ./runSimulator.sh
 ```
 
-```After running these commands, the simulation saves its logs to the examples/car_ws/src/MPCSimulationRunner/data/eval_test directory.```
+* After running these commands, the simulation saves its logs to the ```examples/car_ws/src/MPCSimulationRunner/data/eval_test``` directory.
 
 <!-- **Running through Docker:**
 We also provide a Docker image with all the necessary dependencies pre-installed.
