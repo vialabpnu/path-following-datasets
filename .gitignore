@@ -2,6 +2,7 @@
 **/devel
 **/build
 **/install
+**/.catkin_tools
 
 # Log files
 *.log
