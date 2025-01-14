@@ -78,7 +78,7 @@ RUN git clone https://github.com/vialabpnu/path-following-datasets.git
 # Copy necessary files for dependencies (adjust paths if needed)
 COPY --chown=$USER:$USER py2_requirements_ros.txt /home/$USER/
 COPY --chown=$USER:$USER mpc_environment.yml /home/$USER/
-COPY --chown=$USER:$USER install_dependencies.sh /home/$USER/
+COPY --chown=$USER:$USER install_dependencies_ros.sh /home/$USER/
 
 # Install Python 2 dependencies using pip2
 RUN pip install --upgrade pip==20.3.4 \
