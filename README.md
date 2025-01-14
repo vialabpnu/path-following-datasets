@@ -4,7 +4,7 @@
 ![python](https://img.shields.io/badge/Python-2.7-blue?style=plastic&logo=python)
 ![ROS2](https://img.shields.io/badge/ROS-Melodic-white?style=plastic&logo=ros)
 
-This repository contains a dataset for control algorithm benchmarking in Less structured environments, specifically targeting scenarios like parking lots where precise low-speed maneuvering is crucial. This dataset, based on a map and slope data from Pusan National University (PNU), was created to address the need for specialized data to evaluate the performance of control algorithms for autonomous vehicles and robots navigating in such complex, real-world scenarios.
+This repository contains a dataset for control algorithm benchmarking in less-structured environments, specifically targeting scenarios like parking lots where precise low-speed maneuvering is crucial. This dataset, based on detailed 2D HD maps from two distinct parking areas at Pusan National University (PNU), was created to address the need for specialized data to evaluate the performance of control algorithms for autonomous vehicles and robots navigating in such complex, real-world scenarios.
 
 ## Background
 
@@ -21,7 +21,7 @@ This dataset aims to fill this gap by providing a dedicated resource for evaluat
 
 This dataset includes:
 
-*   **1200 paths:** Generated based on the HD maps of two distinct parking lots at Pusan National University (PNU): the Electrical Engineering building parking lot and the Physics building parking lot. The Physics building parking lot features a sloped terrain, adding another dimension of complexity compared to the Electrical Engineering parking lot. These paths incorporate the complex layouts of the parking lots and, in the case of the Physics building, elevation changes due to the slope.
+*   **1200 paths:** Generated based on the HD maps of two distinct parking lots at Pusan National University (PNU): the Electrical Engineering building parking lot and the Physics building parking lot. The Physics building parking lot features a sloped terrain, adding another dimension of complexity compared to the Electrical Engineering parking lot. 
 *   **Annotations:** Each path is annotated with a difficulty level (easy, moderate, or hard) based on its curvature characteristics. This allows for targeted evaluation of control algorithms on different difficulty levels.
 
 **Example use cases:**
