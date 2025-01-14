@@ -102,8 +102,8 @@ RUN rosdep init || true && \
 USER $USER
 
 # Run the dependency installation script
-RUN chmod +x /home/$USER/install_dependencies.sh && \
-    /bin/bash -c "source /opt/ros/melodic/setup.bash && /home/$USER/install_dependencies.sh"
+RUN chmod +x /home/$USER/install_dependencies_ros.sh && \
+    /bin/bash -c "source /opt/ros/melodic/setup.bash && /home/$USER/install_dependencies_ros.sh"
 
 # Activate conda environment for later use
 SHELL ["conda", "run", "-n", "mpc-gen", "/bin/bash"]
