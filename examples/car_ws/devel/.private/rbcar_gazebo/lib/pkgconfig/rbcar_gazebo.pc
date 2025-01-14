@@ -1,8 +1,0 @@
-prefix=/home/vialab/Bili/PathPlanningDatasets/path-following-datasets/examples/car_ws/devel/.private/rbcar_gazebo
-
-Name: rbcar_gazebo
-Description: Description of rbcar_gazebo
-Version: 1.0.4
-Cflags: 
-Libs: -L${prefix}/lib 
-Requires: 

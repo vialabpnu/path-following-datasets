@@ -1,8 +1,0 @@
-prefix=/home/vialab/Bili/PathPlanningDatasets/path-following-datasets/examples/car_ws/install
-
-Name: rbcar_transform
-Description: Description of rbcar_transform
-Version: 0.0.0
-Cflags: 
-Libs: -L${prefix}/lib 
-Requires: 

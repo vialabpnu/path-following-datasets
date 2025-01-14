@@ -1,8 +1,0 @@
-prefix=/home/vialab/Bili/PathPlanningDatasets/path-following-datasets/examples/car_ws/devel/.private/rbcar_joystick
-
-Name: rbcar_joystick
-Description: Description of rbcar_joystick
-Version: 1.0.4
-Cflags: 
-Libs: -L${prefix}/lib 
-Requires: robotnik_msgs ackermann_msgs

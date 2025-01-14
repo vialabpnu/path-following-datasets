@@ -1,8 +1,0 @@
-prefix=/home/vialab/Bili/PathPlanningDatasets/path-following-datasets/examples/car_ws/install
-
-Name: rbcar_pad
-Description: Description of rbcar_pad
-Version: 1.0.5
-Cflags: 
-Libs: -L${prefix}/lib 
-Requires: 

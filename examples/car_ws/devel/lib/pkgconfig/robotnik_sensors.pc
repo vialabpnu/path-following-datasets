@@ -1,1 +1,0 @@
-/home/vialab/Bili/PathPlanningDatasets/path-following-datasets/examples/car_ws/devel/.private/robotnik_sensors/lib/pkgconfig/robotnik_sensors.pc

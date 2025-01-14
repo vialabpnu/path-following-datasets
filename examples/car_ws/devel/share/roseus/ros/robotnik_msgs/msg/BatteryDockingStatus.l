@@ -1,1 +1,0 @@
-/home/vialab/Bili/PathPlanningDatasets/path-following-datasets/examples/car_ws/devel/.private/robotnik_msgs/share/roseus/ros/robotnik_msgs/msg/BatteryDockingStatus.l

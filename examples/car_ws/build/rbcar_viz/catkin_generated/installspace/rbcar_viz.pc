@@ -1,8 +1,0 @@
-prefix=/home/vialab/Bili/PathPlanningDatasets/path-following-datasets/examples/car_ws/install
-
-Name: rbcar_viz
-Description: Description of rbcar_viz
-Version: 0.3.1
-Cflags: 
-Libs: -L${prefix}/lib 
-Requires: 

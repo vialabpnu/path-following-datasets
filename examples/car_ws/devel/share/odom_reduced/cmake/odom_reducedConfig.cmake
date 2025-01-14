@@ -1,1 +1,0 @@
-/home/vialab/Bili/PathPlanningDatasets/path-following-datasets/examples/car_ws/devel/.private/odom_reduced/share/odom_reduced/cmake/odom_reducedConfig.cmake

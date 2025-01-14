@@ -1,1 +1,0 @@
-/home/vialab/Bili/PathPlanningDatasets/path-following-datasets/examples/car_ws/devel/.private/rbcar_joystick/lib/pkgconfig/rbcar_joystick.pc
