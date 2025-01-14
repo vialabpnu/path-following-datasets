@@ -21,22 +21,22 @@ This dataset aims to fill this gap by providing a dedicated resource for evaluat
 
 This dataset includes:
 
-* **1000+ paths:**  Generated based on the HD map of PNU's parking lot and a slope map built in the Physics Building of PNU. These paths incorporate elevation changes and the complex layout of the parking lot.
-* **Annotations:** Each path is annotated with a difficulty level (easy, moderate, or hard) based on its curvature characteristics. This allows for targeted evaluation of control algorithms on different difficulty levels.
+*   **1200 paths:** Generated based on the HD maps of two distinct parking lots at Pusan National University (PNU): the Electrical Engineering building parking lot and the Physics building parking lot. The Physics building parking lot features a sloped terrain, adding another dimension of complexity compared to the Electrical Engineering parking lot. These paths incorporate the complex layouts of the parking lots and, in the case of the Physics building, elevation changes due to the slope.
+*   **Annotations:** Each path is annotated with a difficulty level (easy, moderate, or hard) based on its curvature characteristics. This allows for targeted evaluation of control algorithms on different difficulty levels.
 
 **Example use cases:**
 
-* **Control algorithm benchmarking:** Comparing the performance of different control algorithms (e.g., PID, MPC, pure pursuit) in tracking the generated paths, analyzing their ability to handle varying curvature and difficulty levels.
-* **Parking lot navigation:** This data can be used for evaluating the performance of autonomous valet parking (AVP) systems in navigating complex parking lot scenarios.
-* **Developing learning-based control algorithms:** Training and evaluating reinforcement learning agents or other learning-based controllers to navigate in Less structured environments.
-* **Testing path-following algorithms in the presence of disturbances:** Evaluating the robustness of control algorithms to disturbances like wind, tire slip, or sensor noise.
-* **Analyzing the impact of different vehicle parameters on control performance:** Studying how factors like vehicle dimensions, mass, and tire characteristics affect path-following accuracy.
+*   **Control algorithm benchmarking:** Comparing the performance of different control algorithms (e.g., PID, MPC, pure pursuit) in tracking the generated paths, analyzing their ability to handle varying curvature and difficulty levels.
+*   **Less-structured environment navigation:** This data can be used for evaluating the performance of autonomous driving systems in navigating complex, less-structured environments like parking lots.
+*   **Developing learning-based control algorithms:** Training and evaluating reinforcement learning agents or other learning-based controllers to navigate in less-structured environments.
+*   **Testing path-following algorithms in the presence of disturbances:** Evaluating the robustness of control algorithms to disturbances like wind, tire slip, or sensor noise.
+*   **Analyzing the impact of different vehicle parameters on control performance:** Studying how factors like vehicle dimensions, mass, and tire characteristics affect path-following accuracy.
 
 ## Data Collection
 
 The paths in this dataset were generated using the Hybrid A* algorithm. This algorithm combines the benefits of A* search with continuous state space exploration, making it suitable for finding optimal paths in complex environments with kinodynamic constraints, such as those encountered by vehicles. By incorporating heuristics and continuous state transitions, Hybrid A* efficiently explores the search space and generates smooth, drivable paths.
 
-The algorithm was applied to the HD map of PNU's parking lot and a slope map built in the Physics Building to generate a diverse set of paths with varying difficulty levels.
+The algorithm was applied to the HD maps of PNU's Electrical Engineering building parking lot and the Physics building parking lot (with its sloped terrain) to generate a diverse set of paths with varying difficulty levels.
 
 ## Dataset Format
 The dataset is organized in the following folder structure:
@@ -57,7 +57,7 @@ The dataset is provided in CSV file format with its metadata. Each CSV file repr
 * **ref_x:**  The x-coordinate of the reference path (in meters).
 * **ref_y:** The y-coordinate of the reference path (in meters).
 * **ref_yaw:** The yaw angle of the reference path (in radians).
-<!-- * **ref_z:** The height information of the reference path (in meters). -->
+* **ref_z:** The height information of the reference path (in meters).
 
 The difficulty level and the map used for generating the path are encoded in the filename. For example:
 
@@ -121,11 +121,11 @@ cd path-following-datasets
 ./runSimulator.sh
 ``` -->
 
-## Citation
+<!-- ## Citation
 
 If you use this dataset in your research, please cite the following paper:
 
-[Your paper citation details]
+[Your paper citation details] -->
 
 ## License
 
@@ -133,4 +133,9 @@ This dataset is released under the **GPL-3.0 license**.
 
 ## Acknowledgements
 
-[Acknowledge any individuals or organizations that supported the creation of this dataset.]
+This golf cart simulator utilizes Robotnik Automation's Gazebo-based Ackermann steering model (found in the repositories below), adapted and configured to match our specific vehicle.
+
+* [rbcar_sim](https://github.com/RobotnikAutomation/rbcar_sim/tree/melodic-devel-namespace) - Provides the core simulation packages.
+* [rbcar_common](https://github.com/RobotnikAutomation/rbcar_common/tree/melodic-devel-sim) - Contains common packages and utilities used in the simulation.
+
+We extend our gratitude to the developers and contributors of these repositories for their valuable work.
