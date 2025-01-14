@@ -133,7 +133,7 @@ This dataset is released under the **GPL-3.0 license**.
 
 ## Acknowledgements
 
-This golf cart simulator utilizes Robotnik Automation's Gazebo-based Ackermann steering model (found in the repositories below), adapted and configured to match our specific vehicle.
+This golf cart simulator utilizes Robotnik Automation's Gazebo-based Ackermann steering model (found in the repositories below), adapted and configured to match our specific golfcart vehicle platform.
 
 * [rbcar_sim](https://github.com/RobotnikAutomation/rbcar_sim/tree/melodic-devel-namespace) - Provides the core simulation packages.
 * [rbcar_common](https://github.com/RobotnikAutomation/rbcar_common/tree/melodic-devel-sim) - Contains common packages and utilities used in the simulation.
