@@ -5,8 +5,8 @@ USER_NAME=$(whoami)
 HOME_DIR="/home/$USER_NAME"
 
 # Set the paths for the car_ws and the path-following-datasets
-CAR_WS_PATH=HOME_DIR + "/path-following-datasets/examples/car_ws"
-DATASET_PATH=HOME_DIR + "/path-following-datasets/path_datasets"
+CAR_WS_PATH="$HOME_DIR/path-following-datasets/examples/car_ws"
+DATASET_PATH="$HOME_DIR/path-following-datasets/path_datasets"
 
 xdotool windowsize $(xdotool getactivewindow) 100% 100%
 
