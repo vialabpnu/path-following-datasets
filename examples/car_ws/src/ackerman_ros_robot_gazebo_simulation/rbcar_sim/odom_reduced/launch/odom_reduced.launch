@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+
+  <node name="odom_reduced" pkg="odom_reduced" type="odom_reduced_freq" output="screen">
+  </node> 
+  
+</launch>

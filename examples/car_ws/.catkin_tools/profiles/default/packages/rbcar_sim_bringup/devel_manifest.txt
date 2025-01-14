@@ -1,0 +1,5 @@
+ackerman_ros_robot_gazebo_simulation/rbcar_sim/rbcar_sim_bringup
+/home/vialab/path-following-datasets/examples/car_ws/devel/.private/rbcar_sim_bringup/cmake.lock /home/vialab/path-following-datasets/examples/car_ws/devel/./cmake.lock
+/home/vialab/path-following-datasets/examples/car_ws/devel/.private/rbcar_sim_bringup/lib/pkgconfig/rbcar_sim_bringup.pc /home/vialab/path-following-datasets/examples/car_ws/devel/lib/pkgconfig/rbcar_sim_bringup.pc
+/home/vialab/path-following-datasets/examples/car_ws/devel/.private/rbcar_sim_bringup/share/rbcar_sim_bringup/cmake/rbcar_sim_bringupConfig-version.cmake /home/vialab/path-following-datasets/examples/car_ws/devel/share/rbcar_sim_bringup/cmake/rbcar_sim_bringupConfig-version.cmake
+/home/vialab/path-following-datasets/examples/car_ws/devel/.private/rbcar_sim_bringup/share/rbcar_sim_bringup/cmake/rbcar_sim_bringupConfig.cmake /home/vialab/path-following-datasets/examples/car_ws/devel/share/rbcar_sim_bringup/cmake/rbcar_sim_bringupConfig.cmake

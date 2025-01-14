@@ -1,0 +1,63 @@
+# Workflow for checking the integrity of datasets to ensure that they 
+# have not been tampered with or corrupted.
+#
+# This workflow calculates checksums of the datasets at the beginning 
+# and end of the workflow to ensure that any modifications made by 
+# the workflow are intentional and controlled. 
+name: Dataset Integrity Check
+
+on:
+  push:
+    branches:
+      - main 
+      - dev
+
+jobs:
+  check_integrity:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 
+
+      - name: Change directory to train data
+        run: cd $GITHUB_WORKSPACE/path_datasets/train 
+
+      - name: Calculate initial checksums for train data
+        run: |
+          find . -name "*.csv" -type f -exec sha256sum {} \; > $GITHUB_WORKSPACE/path_datasets/original_checksums_train.txt 
+
+      - name: Change directory to test data
+        run: cd $GITHUB_WORKSPACE/path_datasets/test
+
+      - name: Calculate initial checksums for test data
+        run: |
+          find . -name "*.csv" -type f -exec sha256sum {} \; > $GITHUB_WORKSPACE/path_datasets/original_checksums_test.txt
+
+      - name: Change directory to train data
+        run: cd $GITHUB_WORKSPACE/path_datasets/train
+
+      - name: Calculate checksums for train data
+        run: |
+          find . -name "*.csv" -type f -exec sha256sum {} \; > $GITHUB_WORKSPACE/path_datasets/new_checksums_train.txt 
+
+      - name: Change directory to test data
+        run: cd $GITHUB_WORKSPACE/path_datasets/test
+
+      - name: Calculate checksums for test data
+        run: |
+          find . -name "*.csv" -type f -exec sha256sum {} \; > $GITHUB_WORKSPACE/path_datasets/new_checksums_test.txt
+
+      - name: Change directory to path_datasets
+        run: cd $GITHUB_WORKSPACE/path_datasets
+
+      - name: Compare train checksums
+        run: diff $GITHUB_WORKSPACE/path_datasets/original_checksums_train.txt $GITHUB_WORKSPACE/path_datasets/new_checksums_train.txt
+
+      - name: Compare test checksums
+        run: diff $GITHUB_WORKSPACE/path_datasets/original_checksums_test.txt $GITHUB_WORKSPACE/path_datasets/new_checksums_test.txt
+
+      - name: Fail if differences found
+        if: failure()
+        run: echo "Data integrity check failed, please check the differences above" && exit 1

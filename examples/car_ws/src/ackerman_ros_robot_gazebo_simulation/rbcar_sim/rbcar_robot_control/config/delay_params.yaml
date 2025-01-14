@@ -1,0 +1,5 @@
+# Actuator Delay Parameters
+time_delay_throttle: 0.0 #0.26
+time_delay_steering: 0.0 #0.16836 # 0.18
+# Activate delay estimation
+use_delay_estimation_function: False

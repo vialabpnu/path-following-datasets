@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<launch>
+
+    <node pkg="tf2_ros" type="static_transform_publisher" name="world_to_map" args="0 0 0 0 0 0 1 world map">
+    </node>
+
+    <node name="odom_to_tf" pkg="message_to_tf" type="message_to_tf" args="/INS/odom">
+    </node> 
+
+    <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="base_stabilized_to_odom" args="0 0 0 0 0 0 1 base_stabilized odom"> -->
+    <!-- </node>  -->
+
+</launch>
+
+
+

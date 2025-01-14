@@ -1,0 +1,6 @@
+image: Map_ParkingLot_Above3m.png
+resolution: 0.05
+origin: [-50, -50, 0.0]
+negate: 1
+occupied_thresh: 0.65
+free_thresh: 0.196

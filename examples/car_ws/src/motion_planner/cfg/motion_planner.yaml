@@ -1,0 +1,15 @@
+global_path_receive_once: true
+goal_distance_threshold: 1.0
+mode: test # train or test/val
+path_file_dir: /car_ws/path/20240404_0400/train/path_147.csv
+path_train_pre_dir: path_datasets
+ref_path_load_from_file: true
+manual_path_generation: false
+save_global_path: false
+save_global_path_spline: false
+skip_points_num: 1
+train_rl_model: true
+use_linear_spline: false
+use_motion_planner: true
+use_past_seed: false
+decay_constant_mpc: 0.0

@@ -1,0 +1,5 @@
+<launch>	
+    <!--  ************** MPC ***************  -->
+	<node pkg="ackermann_drive_teleop" type="mpc_node_simplified_rl.py" respawn="false" name="mpc_node" output="screen" required="true">
+	</node>
+</launch>
