@@ -57,6 +57,7 @@ class RunandGatherResults:
         self.current_time = datetime.datetime.now().strftime("%Y%m%d_%H%M")
         self.eval_results_path = self.current_workspace_dir + self.eval_results_path
         self.eval_results_path_target = os.path.join(self.eval_results_path, self.current_time)
+        self.save_results_in_eval_test_folder = False
         self.process_list = []
         self.gazebo_reset_command = "rosservice call /gazebo/reset_simulation {}"
 
@@ -86,30 +87,31 @@ class RunandGatherResults:
                 run_command_dict = {
                     'mpc_node': self.run_command_mpc_node,
                     'motion_planner': self.run_command_motion_planner,
-                    'mpc_server': self.run_command_mpc_server + ' --horizon_type ' + sampling_param + ' --file_path_name ' + path_file,
+                    'mpc_server': self.run_command_mpc_server + ' --horizon_type ' + sampling_param + ' --file_path_name ' + path_file + ' --eval_path_folder ' + self.current_time
                 }
+                print(f"MPC Server: {run_command_dict['mpc_server']}")
                 idx = 0
 
                 time.sleep(3)
                 for key, value in run_command_dict.items():
                     if key == 'mpc_server':
-                        command = ["cd ~/car_ws",
-                                  ". ~/miniconda3/etc/profile.d/conda.sh && conda activate lab",
+                        command = [f"cd {self.current_workspace_dir}",
+                                  ". ~/miniconda3/etc/profile.d/conda.sh && conda activate mpc-gen",
                                   str(value)]
                     elif key == 'mpc_node':
-                        command = ["source /home/vialab/" + self.workspace_list + "/devel/setup.bash",
+                        command = [f"source {self.current_workspace_dir}" + "/devel/setup.bash",
                                   f"sleep {self.sleep_list[idx]}",
                                   str(value) + ' --eval_mode True' + ' --file_path_name ' + path_file + ' --file_path_dir ' + self.eval_results_path_target \
                                   + ' --horizon_type ' + sampling_param
                                   ] 
                     elif key == 'motion_planner':
                         command = ["cd ",
-                                  "source /home/vialab/" + self.workspace_list + "/devel/setup.bash",
+                                  f"source {self.current_workspace_dir}" + "/devel/setup.bash",
                                   f"sleep {self.sleep_list[idx]}",
                                   str(value) + ' eval_mode:=true' + ' file_path:=' + path_file
                                   ]
                     else:
-                        command = ["cd ~/car_ws",
+                        command = [f"cd {self.current_workspace_dir}",
                                   f"sleep {self.sleep_list[idx]}",
                                   str(value)
                                   ]
@@ -150,16 +152,16 @@ class RunandGatherResults:
                 time.sleep(4)
                 if os.path.exists(os.path.join(self.eval_results_path, 'timeout.txt')):
                     os.remove(os.path.join(self.eval_results_path, 'timeout.txt'))
+                if self.save_results_in_eval_test_folder:
+                    self.logger.info("Moving the results to the evaluation folder")
+                    get_list_files = os.listdir(self.eval_results_path)
+                    for file in get_list_files:
+                        if file.endswith('.csv'):
+                            os.rename(os.path.join(self.eval_results_path, file), os.path.join(self.eval_results_path_target, file))
+                    with open(os.path.join(self.eval_results_path_target, 'path_dir.csv'), 'w') as f:
+                        f.write(self.path_files)
 
-                self.logger.info("Moving the results to the evaluation folder")
-                get_list_files = os.listdir(self.eval_results_path)
-                for file in get_list_files:
-                    if file.endswith('.csv'):
-                        os.rename(os.path.join(self.eval_results_path, file), os.path.join(self.eval_results_path_target, file))
-                with open(os.path.join(self.eval_results_path_target, 'path_dir.csv'), 'w') as f:
-                    f.write(self.path_files)
-
-                self.logger.info("Finished moving the results to the evaluation folder")
+                    self.logger.info("Finished moving the results to the evaluation folder")
                 self.logger.info("Finished running the results gathering!")
 
 

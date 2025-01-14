@@ -812,14 +812,12 @@ class LinearMPC:
                 logging.info("DT Array from RL %s", dt_array)
             else:
                 # If the motion planner path is updated reset the index
-                print("Same path", same_path)
                 if not same_path:
                     self.last_idx = 0
                     self.prev_path = path_data
                 elif (not goal_reached_from_motion_planner or not self.halt_mpc) and same_path:
                     self.last_idx += 1
                     # self.last_idx = self.find_closest_point(current_state, path_data)
-                print("Last index", self.last_idx)
                 if receive_curvature:
                     self.DT_array = self.scale_dt(path_curve=path_curve[self.last_idx:], type=self.type)
                     self.cur_path_curve = path_curve[self.last_idx]
@@ -922,11 +920,11 @@ class LinearMPC:
             # Copy reference yaw for transformation
             yaw_ref = xref[3, :].copy()
             heading_error, transformed_heading, transformed_heading_ref = self.adjust_heading_error(current_state[3], yaw_ref)
-            logging.warn("Heading Error %s", heading_error)
+            # logging.warn("Heading Error %s", heading_error)
             transformed_xref = np.array([xref[0, :], xref[1, :], xref[2, :], transformed_heading_ref])
             transformed_current_state = [current_state[0], current_state[1], current_state[2], transformed_heading]
             oa, odelta, ox, oy, oyaw, ov = self.calc_linear_mpc_control(transformed_xref, transformed_current_state, a, delta)
-            print(f"Total time for MPC {time.time() - start}")
+            # print(f"Total time for MPC {time.time() - start}")
             if oa is None or odelta is None:
                 oa = [0.0]
                 oa_send = oa[0]

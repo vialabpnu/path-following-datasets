@@ -1,3 +1,4 @@
+#!/usr/bin/env python2.7
 import argparse
 import socket
 import atexit
@@ -30,6 +31,8 @@ pub_first_mpc_control_published = rospy.Publisher("/first_mpc_control_published"
 
 t = 0
 t_count = 0
+t_stop = 0
+stop = False
 path_temp = None
 oa, odelta = None, None
 ref_x, ref_y, ref_yaw = None, None, None
@@ -155,11 +158,8 @@ def control_loop_cb(odom):
             path = np.array([ref_x, ref_y, ref_yaw], dtype=np.float32)
         else:
             if ref_x is not None and ref_y is not None:
-                print("Received path x length in MPC Node ", len(ref_x))
-                print("Received path y length in MPC Node ", len(ref_y))
-                print("Received path v length in MPC Node ", len(ref_v))
-                print("Received path yaw length in MPC Node ", len(ref_yaw))
                 # rospy.logwarn("Received first 8 values of ref yaw in MPC Node: %s", ref_yaw[:8])
+                pass
             path = np.array([ref_x, ref_y, ref_v, ref_yaw], dtype=np.float32)
 
         # Check if the path is nan
@@ -211,7 +211,7 @@ def control_loop_cb(odom):
 
         pub.publish(vehicle_control)
         # pub_stop.publish(isstop)
-        if train_rl_model:
+        if sync_sim:
             # Unpause the simulation to get the next state and send the control inputs
             # Wait for the simulation to reach the next state (step)
             cur_time = rospy.Time.now()
@@ -242,7 +242,7 @@ def halt_car_during_exit():
     
 
 def socket_sending_mpc(path, current_state, vehicle_control, goal_pose=None, goal_verdict=None):
-    global train_rl_model, ref_curv, sock, HEADERSIZE, BUFFERSIZE, ipaddress, PORT, f, eval_mode, save_computation_time, first_control_obtained, car_ws_path
+    global sync_sim, ref_curv, sock, HEADERSIZE, BUFFERSIZE, ipaddress, PORT, f, eval_mode, save_computation_time, first_control_obtained, car_ws_path
 
     path_len = path.shape[0] * path.shape[1] + len(ref_curv)
     path_len_arr = np.array([path_len], dtype=np.float32)
@@ -259,7 +259,7 @@ def socket_sending_mpc(path, current_state, vehicle_control, goal_pose=None, goa
     data = data.tobytes()
 
     msg = bytes('{:<{}}'.format(len(data), HEADERSIZE).encode("utf-8")) + data
-    if train_rl_model:
+    if sync_sim:
         # Pause the simulation to wait for the control inputs
         gazebo_helper.pause()
     count_start = time.time()
@@ -302,7 +302,7 @@ def socket_sending_mpc(path, current_state, vehicle_control, goal_pose=None, goa
             else:
                 first_control_file = os.path.join(car_ws_path, 'src/motion_planner/scripts/control_flag/first_control_obtained.txt')
         else:
-            first_control_file = 
+            first_control_file = os.path.join(car_ws_path, 'src/motion_planner/scripts/control_flag/first_control_obtained.txt')
         with open(first_control_file, 'w') as fs:
             fs.write('1')
     return vehicle_control, stop_signal

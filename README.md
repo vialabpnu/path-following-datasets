@@ -38,14 +38,25 @@ The paths in this dataset were generated using the Hybrid A* algorithm. This alg
 
 The algorithm was applied to the HD map of PNU's parking lot and a slope map built in the Physics Building to generate a diverse set of paths with varying difficulty levels.
 
-## Data Format
+## Dataset Format
 
-The dataset is provided in CSV file format. Each CSV file represents a single path and contains the following four columns:
+The dataset is organized in the following folder structure:
+path_datasets
+├── train
+│   ├── E_Path388_EE.csv
+│   ├── E_Path395_EE.csv
+│   └── ...
+└── test
+    ├── M_Path996_PB.csv
+    ├── H_Path1047_PB.csv
+    └── ... 
+
+The dataset is provided in CSV file format. Each CSV file represents a single path and contains the following columns information:
 
 * **ref_x:**  The x-coordinate of the reference path (in meters).
 * **ref_y:** The y-coordinate of the reference path (in meters).
 * **ref_yaw:** The yaw angle of the reference path (in radians).
-* **ref_z:** The z-coordinate (height) of the reference path (in meters).
+<!-- * **ref_z:** The height information of the reference path (in meters). -->
 
 The difficulty level and the map used for generating the path are encoded in the filename. For example:
 
@@ -53,9 +64,55 @@ The difficulty level and the map used for generating the path are encoded in the
 * `M_Path200_EE.csv` indicates a moderate path (M) generated from the EE building (EE) map.
 * `H_Path300_EE.csv` indicates a hard path (H) generated from the EE parking lot (EE) map.
 
-## Usage Instructions
+**Dataset Split and Proportions:**
 
-[Provide clear instructions on how to use the dataset, including any necessary software or dependencies.]
+* The dataset is split into `train` and `test` sets with a 3:2 ratio. This means that approximately 60% of the paths are in the `train` set and 40% are in the `test` set.
+* Each map (e.g., Physics Building, EE building) has the same proportion of paths in the overall dataset.
+* Each difficulty level (easy, moderate, hard) also has the same proportion of paths in the overall dataset.
+
+This ensures a balanced representation of maps and difficulty levels in both the training and testing sets.
+
+## Usage Examples of Dataset
+
+This section provides examples of how to use the path-following datasets.
+
+**Prerequisites:**
+
+* **Conda:** Make sure you have Conda installed on your system. If not, you can download and install Miniconda from [here](https://docs.conda.io/en/latest/miniconda.html).
+* **ROS Melodic:** This example requires ROS Melodic to be installed. You can find installation instructions on the [ROS website](http://wiki.ros.org/melodic/Installation).
+* **Ubuntu 18.04 or later:** This example is designed for Ubuntu 18.04 or later versions.
+
+**Running with ROS:**
+
+```bash
+# Clone the repository
+cd ~
+git clone git@github.com:vialabpnu/path-following-datasets.git
+
+# Navigate to the examples directory
+cd path-following-datasets
+
+# Install ROS dependencies
+./install_dependencies_ros.sh
+
+# Run the simulator
+./runSimulator.sh
+```
+
+After running these commands, the simulation saves its logs to the examples/car_ws/src/MPCSimulationRunner/data/eval_test directory.
+
+<!-- **Running through Docker:**
+We also provide a Docker image with all the necessary dependencies pre-installed.
+```bash
+# Pull and run the image
+docker run -it <docker_image_name> 
+
+# Navigate to the examples directory (inside the container)
+cd path-following-datasets
+
+# Run the simulator
+./runSimulator.sh
+``` -->
 
 ## Citation
 

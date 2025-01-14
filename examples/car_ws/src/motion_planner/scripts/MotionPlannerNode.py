@@ -26,7 +26,7 @@ from tf.transformations import euler_from_quaternion
 from Helper import PathSmoother, GazeboHelper, GoalCheckerandGetter
 
 
-def get_car_ws_path():
+def get_car_ws_path_and_parent_folder():
     """
     Determines the car_ws path by navigating up from the current file's location.
     """
@@ -36,11 +36,15 @@ def get_car_ws_path():
     src_dir = os.path.abspath(os.path.join(current_dir, '..', '..'))
     # Navigate up to car_ws
     car_ws_path = os.path.abspath(os.path.join(src_dir, '..'))
-    return car_ws_path
+    # Navigate up to path_following_datasets main directory
+    parent_path = os.path.abspath(os.path.join(car_ws_path, '..', '..'))
+    print("Car WS Path: " + car_ws_path)
+    print("Parent Path: " + parent_path)
+    return car_ws_path, parent_path
 
 
 class MotionPlannerNode:
-    car_ws_path = get_car_ws_path()
+    car_ws_path, parent_path = get_car_ws_path_and_parent_folder()
     environ['OMP_NUM_THREADS'] = '6'
     def __init__(self, file_path=None, eval_mode=False):
         # Planner Options
@@ -60,13 +64,13 @@ class MotionPlannerNode:
         self.save_global_path_dir = os.path.join(self.car_ws_path, "src/ackerman_ros_robot_gazebo_simulation/custom_controllers/ackermann-drive-teleop/script_for_mpc_prod/data/")
         self.manual_path_generation = rospy.get_param('~manual_path_generation', True)
         if self.manual_path_generation:
-            self.save_global_path_dir = os.path.join(self.car_ws_path, '/car_ws/path/')
+            self.save_global_path_dir = self.car_ws_path
             cur_date = datetime.datetime.now().strftime("%Y%m%d_%H%M")
             self.save_global_path_dir = os.path.join(self.save_global_path_dir, "manual_generated_path")
             if not os.path.exists(self.save_global_path_dir):
                 os.makedirs(self.save_global_path_dir)
         self.smooth_the_path = rospy.get_param('~smooth_the_path', True)
-        self.save_global_path_spline = rospy.get_param('~save_global_path_spline', True)
+        self.save_global_path_spline = rospy.get_param('~save_global_path_spline', False)
         self.ros_global_planner_launch_dir = rospy.get_param('~ros_global_planner_launch_dir', os.path.join(self.car_ws_path, '/nonlinear_mpc_sim/src/mpc_local_planner/mpc_local_planner_examples/launch/carlike_global_sim.launch'))
         self.goal_lists_dir = rospy.get_param('~goal_lists_dir',os.path.join(self.car_ws_path, 'src/motion_planner/scripts/data/parking_slot_locations.txt'))
         self.train_rl_model = rospy.get_param('~train_rl_model', False)
@@ -101,9 +105,8 @@ class MotionPlannerNode:
         self.pub_global_path = rospy.Publisher('/global_path', Path, queue_size=1)
         self.goal_reached_mp = rospy.Publisher('/path_motion_planner/goal_reached', Bool, queue_size=1)
         self.halting_pub = rospy.Publisher('/rbcar_robot_control/command', AckermannDriveStamped, queue_size=1)
-        self.path_train_pre = self.basedir + '/car_ws/path/'
-        self.path_train_pre_dir = rospy.get_param('~path_train_pre_dir', '20240406_1410')
-        self.path_train_pre_dir = os.path.join(self.path_train_pre, self.path_train_pre_dir)
+        self.path_train_pre = self.parent_path
+        self.path_train_pre_dir = os.path.join(self.path_train_pre, 'path_datasets')
         if not self.eval_mode:
             self.file_path = rospy.get_param('~path_file_dir', self.basedir + '/car_ws/path/20240404_0400/train/path_147.csv')
             file_path = None
@@ -149,8 +152,11 @@ class MotionPlannerNode:
             if self.train_rl_model:
                 if self.mode == 'train':
                     self.file_path_list = os.path.join(self.path_train_pre_dir, 'train')
-                elif self.mode == 'val':
-                    self.file_path_list = os.path.join(self.path_train_pre_dir, 'val')
+                elif self.mode == 'val' or self.mode == 'test':
+                    if self.mode == 'val':
+                        self.file_path_list = os.path.join(self.path_train_pre_dir, 'val')
+                    elif self.mode == 'test':
+                        self.file_path_list = os.path.join(self.path_train_pre_dir, 'test')
                 elif self.mode == 'free':
                     self.file_path_list = os.path.join(self.path_train_pre_dir, 'free')
                 rospy.loginfo("Mode: %s", self.mode)
@@ -251,9 +257,6 @@ class MotionPlannerNode:
             # Set the maximum path length for goal checking
             self.goal_distance_max = self.lattice_planner.ref_path_max_dist
             # Set the Mode CHange Threshold
-            # self.SCALE_FACTOR = 0.8 #1.0 #0.5
-            # self.DIST_FACTOR = self.SCALE_FACTOR * (self.lattice_planner.MAX_T + self.lattice_planner.MIN_T) / 2
-            # self.STOPPING_DIST_THRESHOLD = self.DIST_FACTOR * (self.lattice_planner.SPEED_THRES_STOP**2) / (2 * self.lattice_planner.MAX_ACCEL) #4.48m
             # Set the distance as proportion between the cruising and stopping distance
             proportion_of_stop_dist = 0.25
             self.STOPPING_DIST_THRESHOLD = proportion_of_stop_dist * self.goal_distance_max
@@ -316,7 +319,6 @@ class MotionPlannerNode:
                 # Set the starting pose to the first point of the reference path (prev z-axis default 0.097952)
                 self.starting_pose = [self.ref_x[0], self.ref_y[0], 0.0620, 0.0, 0.0, self.ref_yaw[0]]
                 self.starting_vel = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-            # rospy.loginfo("Resetting the Simulation World")
             # Before resetting the simulation world, make sure that the car is stopped if not stopped then set zero the velocity
             while self.cur_speed[0] is None or np.abs(self.cur_speed[0]) > 0.1:
                 if self.cur_speed[0] is None:
@@ -334,7 +336,6 @@ class MotionPlannerNode:
         self.first_control_received = msg.data
         if not self.first_control_received:
             self.first_control_not_received_count += 1
-            # rospy.loginfo("First Control Received: " + str(self.first_control_received))
         pass
     
     def global_path_callback(self, msg):
@@ -360,9 +361,6 @@ class MotionPlannerNode:
                 self.global_path_receive_flag = False
             rospy.loginfo("Received Global Path!")
             # Set Goal
-            # self.ref_x = ref_x
-            # self.ref_y = ref_y
-            # self.ref_yaw = ref_yaw
             if self.smooth_the_path:
                 path_len = len(ref_x)
                 path_lists = [[ref_x[i], ref_y[i], ref_yaw[i]] for i in range(path_len)]
@@ -603,9 +601,9 @@ class MotionPlannerNode:
                 self.first_control_not_received_count += 1
                 # Check also the first control obtained file, if exists then set the first control received to True
                 if os.environ.get('BASE_DIR') is not None:
-                    first_control_file = os.environ.get('BASE_DIR') + '/car_ws/src/motion_planner/scripts/control_flag/first_control_obtained.txt'
+                    first_control_file = self.car_ws_path + '/src/motion_planner/scripts/control_flag/first_control_obtained.txt'
                 else:
-                    first_control_file = '/home/vialab/car_ws/src/motion_planner/scripts/control_flag/first_control_obtained.txt'
+                    first_control_file = self.car_ws_path + '/src/motion_planner/scripts/control_flag/first_control_obtained.txt'
                 if os.path.exists(first_control_file):
                     self.first_control_received = True
                     rospy.loginfo("First Control Received!")

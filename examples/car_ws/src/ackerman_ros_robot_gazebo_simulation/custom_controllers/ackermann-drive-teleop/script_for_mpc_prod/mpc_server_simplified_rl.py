@@ -36,7 +36,7 @@ def get_car_ws_path():
 class ControlCommand:
     # Get the car_ws path
     car_ws_path = get_car_ws_path()
-    def __init__(self, file_path_name = None, horizon_type="nonuni_sparse_var"):
+    def __init__(self, file_path_name = None, horizon_type="nonuni_sparse_var", eval_path_folder=None):
         self.HEADER_SIZE = 10
         self.ipaddress = None
         self.CLIENT_ADDRESS = None
@@ -46,8 +46,10 @@ class ControlCommand:
         self.u0 = None
         self.t = 0
         self.horizon_type = horizon_type
+        self.eval_path_folder = eval_path_folder
         
         print(f"Horizon type: {self.horizon_type}")
+        print(f"Current Evaluation Path Folder: {self.eval_path_folder}")
         self.mpc = LinearMPCwithMP.LinearMPC(N=9, type=self.horizon_type) # N=9 (Current step 1 + 8 future steps)
         print(f"Weighting matrices: {self.mpc.Q_curve}")
         self.vehicle_state = LinearMPCwithMP.VehicleState()
@@ -204,7 +206,8 @@ class ControlCommand:
                     horizon_type = self.horizon_type
                 folder_for_save = "MPCSimulationRunner"
                 save_path_dir = os.path.join(self.car_ws_path, f"src/{folder_for_save}/data/eval_test")
-                self.save_path_dir = f"{save_path_dir}/{horizon_type}_{verdict}_{self.file_path_name}"
+                save_path_dir_current_folder = os.path.join(save_path_dir, self.eval_path_folder)
+                self.save_path_dir = f"{save_path_dir_current_folder}/{horizon_type}_{verdict}_{self.file_path_name}"
             
             pd.DataFrame(dataFrame).to_csv(self.save_path_dir)
             print(f"Data saved to {self.save_path_dir}")
@@ -297,8 +300,6 @@ class ControlCommand:
         global data
         global new_data
         global time_receive
-
-        # time_func = timeit.timeit()
 
         try:
             if path_available:
@@ -410,16 +411,12 @@ class ControlCommand:
             self.control_send[4] = 0.0
             self.control_send = self.control_send.astype(dtype=np.float32) * 1.0
             
-            # time.sleep(3)
             data = self.control_send.tobytes()
             msg = bytes(f'{len(data):<{self.HEADER_SIZE}}', "utf-8") + data
-            time_needed = time.time() - time_receive
-            print(f"The time needed: {time_needed}")
             connection.sendto(msg, self.CLIENT_ADDRESS)
 
             self.state_v.append(ovs)
             self.input_a.append(oa_send)
-            # print(od)
             self.steer.append(od_send)
             self.goal_is_reached_flag_array.append(sign)
 
@@ -442,7 +439,7 @@ class ControlCommand:
             #     self.heading_error_counter += 1
             
             # if self.vel_stuck_count > self.vel_stuck_count_threshold or self.heading_error_counter > self.heading_error_counter_threshold or self.mpc_solving_failure_counter > self.mpc_solving_failure_threshold or self.distance_error_violation:
-            timeout_file_dir = os.path.join(self.car_ws_path, "src/MPC_Results_Gather/data/eval_test/timeout.txt")
+            timeout_file_dir = os.path.join(self.car_ws_path, "src/MPCSimulationRunner/data/eval_test/timeout.txt")
             if self.vel_stuck_count > self.vel_stuck_count_threshold or self.mpc_solving_failure_counter > self.mpc_solving_failure_threshold or self.distance_error_violation:
                 # Create a timeout file to save the data and exit
                 with open(timeout_file_dir, "w") as f:
@@ -457,8 +454,6 @@ class ControlCommand:
             print("Error in sending control inputs")
             print(e)
             print(traceback.format_exc())
-            # print("\nSave data and exit")
-            # self.save_data()
             sys.exit(1)
             
     def update_vehicle_state(self, current_state):
@@ -477,15 +472,15 @@ if __name__ == "__main__":
     parser.add_argument("--receive_curvature", type=bool, default=True, help="Receive curvature")
     parser.add_argument("--eval", type=bool, default=False, help="Evaluate the MPC controller")
     parser.add_argument("--file_path_name", type=str, default=None, help="File path name")
+    parser.add_argument("--eval_path_folder", type=str, default=None, help="Evaluation path folder")
     args = parser.parse_args()
     file_path_name = args.file_path_name
     horizon_type = args.horizon_type
-    comm = ControlCommand(file_path_name=file_path_name, horizon_type=horizon_type)
+    comm = ControlCommand(file_path_name=file_path_name, horizon_type=horizon_type, eval_path_folder=args.eval_path_folder)
     signal.signal(signal.SIGTERM, comm.sigterm_handler)
     # atexit.register(comm.save_data())
 
     while True:
         # Wait for a connection
-        # TODO: Fix the connection to connect only one
         comm.recv_path(comm.sock)
         comm.send_control_inputs(comm.sock)        
