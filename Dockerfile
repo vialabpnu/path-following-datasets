@@ -108,8 +108,8 @@ RUN chmod +x /home/$USER/install_dependencies_ros.sh && \
 # Activate conda environment for later use
 SHELL ["conda", "run", "-n", "mpc-gen", "/bin/bash"]
 
-# Source ROS setup (Optional)
-RUN echo "source /opt/ros/melodic/setup.bash" >> /home/$USER/.bashrc
+# Source ROS setup (Optional), It should automatically done as we used the ros docker image
+# RUN echo "source /opt/ros/melodic/setup.bash" >> /home/$USER/.bashrc
 
 # You can add further instructions here, e.g., to build your ROS workspace if needed
 
