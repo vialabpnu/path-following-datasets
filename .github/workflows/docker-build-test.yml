@@ -34,7 +34,7 @@ jobs:
 
       - name: Run Docker container
         run: |
-          docker run -it path-following-env:latest /bin/bash -c "source /opt/ros/melodic/setup.bash && source /home/ubuntu/.bashrc && cd path-following-datasets && bash run_example.sh"
+          docker run -it path-following-env:latest /bin/bash -c "source /opt/ros/melodic/setup.bash && source /home/ubuntu/.bashrc && cd path-following-datasets/examples/ && bash runSimulation.sh"
 
       - name: Verify Conda environment
         run: |
