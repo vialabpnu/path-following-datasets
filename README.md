@@ -21,7 +21,7 @@ This dataset aims to fill this gap by providing a dedicated resource for evaluat
 
 This dataset includes:
 
-*   **1200 paths:** Generated based on the HD maps of two distinct parking lots at Pusan National University (PNU): the Electrical Engineering building parking lot and the Physics building parking lot. The Physics building parking lot features a sloped terrain, adding another dimension of complexity compared to the Electrical Engineering parking lot. 
+*   **1200 paths:** Generated based on the HD maps of two distinct parking lots at PNU: the Electrical Engineering building parking lot and the Physics building parking lot. The Physics building parking lot features a sloped terrain, adding another dimension of complexity compared to the Electrical Engineering parking lot. 
 *   **Annotations:** Each path is annotated with a difficulty level (easy, moderate, or hard) based on its curvature characteristics. This allows for targeted evaluation of control algorithms on different difficulty levels.
 
 **Example use cases:**
