@@ -1,0 +1,45 @@
+name: Docker Build and Test
+
+on:
+  push:
+    branches:
+      - main  # Trigger the workflow on pushes to the main branch
+      - dev
+  pull_request:
+    branches:
+      - main  # Trigger the workflow on pull requests against the main branch
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: false  # Set to true to push to a registry
+          tags: path-following-env:latest
+          # Optional: Add build-args if your Dockerfile uses them
+          # build-args: |
+          #   USER=your_user
+          #   UID=1000
+          #   GID=1000
+
+      - name: Run Docker container
+        run: |
+          docker run -it path-following-env:latest /bin/bash -c "source /opt/ros/melodic/setup.bash && source /home/ubuntu/.bashrc && cd path-following-datasets/examples/ && bash runSimulator.sh"
+
+      - name: Verify Conda environment
+        run: |
+          docker run -it path-following-env:latest /bin/bash -c "conda info && conda env list"
+
+      - name: Verify ROS installation
+        run: |
+          docker run -it path-following-env:latest /bin/bash -c "source /opt/ros/melodic/setup.bash && rospack list"
