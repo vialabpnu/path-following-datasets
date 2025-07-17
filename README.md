@@ -93,7 +93,7 @@ git clone git@github.com:vialabpnu/path-following-datasets.git
 cd path-following-datasets
 
 # Install ROS dependencies
-./install_dependencies_ros.sh
+./install_dependencies_ros_melodic.sh
 
 # Navigate to the examples directory
 cd examples/car_ws
