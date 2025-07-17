@@ -160,9 +160,10 @@ class ControlCommand:
 
         self.file_path_name = file_path_name
         self.save_path_dir = None
-        atexit.register(lambda: self.save_data())
-            # for saving data when KeyboardInterrupt
-        # signal.signal(signal.SIGINT, self.sigint_handler)
+        atexit.register(self.save_data)
+        # for saving data when KeyboardInterrupt
+        signal.signal(signal.SIGINT, lambda signum, frame: self.save_data() or sys.exit(0))
+        signal.signal(signal.SIGTERM, lambda signum, frame: self.save_data() or sys.exit(0))
 
     def save_data(self):
         minLen = []
@@ -483,7 +484,6 @@ if __name__ == "__main__":
     horizon_type = args.horizon_type
     comm = ControlCommand(file_path_name=file_path_name, horizon_type=horizon_type, eval_path_folder=args.eval_path_folder)
     signal.signal(signal.SIGTERM, comm.sigterm_handler)
-    # atexit.register(comm.save_data())
 
     while True:
         # Wait for a connection

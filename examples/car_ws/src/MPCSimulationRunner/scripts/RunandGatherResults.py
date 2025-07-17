@@ -59,7 +59,7 @@ class RunandGatherResults:
         self.current_time = datetime.datetime.now().strftime("%Y%m%d_%H%M")
         self.eval_results_path = self.current_workspace_dir + self.eval_results_path
         self.eval_results_path_target = os.path.join(self.eval_results_path, self.current_time)
-        self.save_results_in_eval_test_folder = False
+        self.save_results_in_eval_test_folder = True
         self.process_list = []
         self.gazebo_reset_command = "rosservice call /gazebo/reset_simulation {}"
         if not noisy_odom_params:
@@ -124,7 +124,7 @@ class RunandGatherResults:
                     for key, value in run_command_dict.items():
                         if key == 'mpc_server':
                             command = [f"cd {self.current_workspace_dir}",
-                                    ". ~/miniconda3/etc/profile.d/conda.sh && conda activate mpc-gen",
+                                    ". ~/anaconda3/etc/profile.d/conda.sh && conda activate mpc-gen",
                                     str(value)]
                         elif key == 'mpc_node':
                             command = [f"source {self.current_workspace_dir}" + "/devel/setup.bash",
@@ -182,16 +182,16 @@ class RunandGatherResults:
                         os.remove(os.path.join(self.eval_results_path, 'timeout.txt'))
                     if self.save_results_in_eval_test_folder:
                         self.logger.info("Moving the results to the evaluation folder")
-                        get_list_files = os.listdir(self.eval_results_path)
+                        get_list_files = os.listdir(self.eval_results_path_target)
                         for file in get_list_files:
                             if file.endswith('.csv'):
-                                os.rename(os.path.join(self.eval_results_path, file), os.path.join(self.eval_results_path_target_run, file))
-                        with open(os.path.join(self.eval_results_path_target_run, 'path_dir.csv'), 'w') as f:
+                                os.rename(os.path.join(self.eval_results_path_target, file), os.path.join(self.eval_results_path_target_run, file))
+                        with open(os.path.join(self.eval_results_path_target, 'path_dir.csv'), 'w') as f:
                             f.write(self.path_files)
 
                         self.logger.info("Finished moving the results to the evaluation folder")
                     self.logger.info("Finished running the results gathering!")
-                
+                    
              # Terminate the noisy odom node after the simulation
             self.logger.info("Terminating noisy odometry node.")
             noisy_proc.terminate()
