@@ -61,7 +61,7 @@ sudo apt-get install -y \
 echo "source /opt/ros/melodic/setup.bash" >> ~/.bashrc
 
 # Install Python 2 dependencies
-pip2 install -r py2_requirements_ros.txt
+pip2 install -r py2_requirements_ros_melodic.txt
 
 # Create conda environment based on the provided environment.yml file
 conda env create -f mpc_environment.yml

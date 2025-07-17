@@ -473,6 +473,11 @@ if __name__ == "__main__":
     parser.add_argument("--eval", type=bool, default=False, help="Evaluate the MPC controller")
     parser.add_argument("--file_path_name", type=str, default=None, help="File path name")
     parser.add_argument("--eval_path_folder", type=str, default=None, help="Evaluation path folder")
+    parser.add_argument("--noise_on_state", type=bool, default=False, help="Add noise to the state")
+    parser.add_argument("--noise_on_position", type=float, default=0.0, help="SD of Noise on position x and y state (m)")
+    parser.add_argument("--noise_on_velocity", type=float, default=0.0, help="SD of Noise on velocity state (m/s)")
+    parser.add_argument("--noise_on_yaw", type=float, default=0.0, help="SD of Noise on yaw state (rad)")
+    
     args = parser.parse_args()
     file_path_name = args.file_path_name
     horizon_type = args.horizon_type

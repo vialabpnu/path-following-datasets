@@ -181,7 +181,7 @@
 	  <alwaysOn>true</alwaysOn>
 	  <updateRate>10</updateRate>
 	  <bodyName>base_footprint</bodyName>
-	  <topicName>/INS/odom</topicName>
+	  <topicName>/INS/odom_raw</topicName>
 	  <gaussianNoise>0.0</gaussianNoise>
 	  <frameName>map</frameName>
 	  <xyzOffsets>0 0 0</xyzOffsets>

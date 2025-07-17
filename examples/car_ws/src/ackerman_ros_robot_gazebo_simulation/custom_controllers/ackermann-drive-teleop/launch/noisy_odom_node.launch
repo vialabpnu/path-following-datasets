@@ -1,0 +1,8 @@
+<launch>
+    <!-- Launch the noisy odometry node -->
+    <node pkg="ackermann-drive-teleop"
+          type="noisy_odom_node.py"
+          name="noisy_odom_node"
+          output="screen"
+          args="--input_topic /INS/odom_raw --output_topic /INS/odom --enable_x --enable_y --enable_heading --enable_speed --x_stddev 0.05 --y_stddev 0.05 --heading_stddev 0.02 --speed_stddev 0.1" />
+</launch> 

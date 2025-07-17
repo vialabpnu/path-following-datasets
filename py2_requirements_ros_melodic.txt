@@ -18,5 +18,3 @@ tqdm==4.19.5
 trimesh==3.23.5
 urllib3==1.22
 vcstools==0.1.42
-
-
