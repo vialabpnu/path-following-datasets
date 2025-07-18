@@ -21,6 +21,7 @@
 *.pyo
 *.pyd
 __pycache__/
+**/generated_path/*
 
 # CMake
 CMakeLists.txt.user
