@@ -190,7 +190,8 @@ class RunandGatherResults:
                             f.write(self.path_files)
 
                         self.logger.info("Finished moving the results to the evaluation folder")
-                    self.logger.info("Finished running the results gathering!")
+                self.logger.info("Finished running the results gathering!")
+            self.logger.info("Finished running the simulation!")
                     
              # Terminate the noisy odom node after the simulation
             self.logger.info("Terminating noisy odometry node.")

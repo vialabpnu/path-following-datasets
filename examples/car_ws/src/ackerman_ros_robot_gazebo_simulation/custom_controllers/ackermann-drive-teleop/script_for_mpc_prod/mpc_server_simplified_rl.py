@@ -37,6 +37,14 @@ class ControlCommand:
     # Get the car_ws path
     car_ws_path = get_car_ws_path()
     def __init__(self, file_path_name = None, horizon_type="nonuni_sparse_var", eval_path_folder=None):
+        # Load vehicle_params.yaml from the project root (five levels up)
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        yaml_file_path = os.path.abspath(
+            os.path.join(script_dir, '../../../../../..', 'vehicle_params.yaml')
+        )
+        with open(yaml_file_path, 'r') as f:
+            self.vehicle_params = yaml.safe_load(f)
+        
         self.HEADER_SIZE = 10
         self.ipaddress = None
         self.CLIENT_ADDRESS = None
@@ -53,6 +61,12 @@ class ControlCommand:
         self.mpc = LinearMPCwithMP.LinearMPC(N=9, type=self.horizon_type) # N=9 (Current step 1 + 8 future steps)
         print(f"Weighting matrices: {self.mpc.Q_curve}")
         self.vehicle_state = LinearMPCwithMP.VehicleState()
+        
+        # Set the vehicle parameters in the MPC class
+        self.mpc.WB = self.vehicle_params['wheelbase']
+        self.mpc.MAX_STEER = self.vehicle_params['steering_angle_limit_rad']
+        self.mpc.MAX_DSTEER = self.vehicle_params['steering_angle_rate_limit_rad_s']
+        
         self.server_dt = self.mpc.DT
         self.plot_now = False
         self.plot_interval = 10
