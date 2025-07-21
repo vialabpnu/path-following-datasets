@@ -96,6 +96,7 @@ RUN pip2 install --upgrade pip==20.3.4 \
 USER root
 RUN python2 -m pip install backports.functools-lru-cache \
     && python2 -c "from backports.functools_lru_cache import lru_cache"
+RUN pip2 install arrow==0.12.0 
 
 # Switch back to the default user
 USER ubuntu
