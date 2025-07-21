@@ -41,7 +41,7 @@ jobs:
           echo "Starting container for a 30-second smoke test..."
           
           # We explicitly tell Docker to run supervisord, overriding the default CMD ["/bin/bash"]
-          timeout 30s docker run --rm path-following-env:latest \
+          timeout 30s docker run --rm --user root path-following-env:latest \
             /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
           
           status=$?
