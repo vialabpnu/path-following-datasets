@@ -126,7 +126,7 @@ SHELL ["conda", "run", "-n", "mpc-gen", "/bin/bash"]
 RUN ["/bin/bash", "-c", "source /opt/ros/melodic/setup.bash && cd /home/ubuntu/path-following-datasets/examples/car_ws && catkin build"]
 
 # This runs every time you start the container with 'docker run'.
-ENTRYPOINT ["/bin/bash", "-c", "source /home/$USER/miniconda/conda.sh && conda activate mpc-gen && source /opt/ros/melodic/setup.bash && exec \"$@\"", "bash"]
+ENTRYPOINT ["/bin/bash", "-c", "source /home/ubuntu/miniconda/etc/profile.d/conda.sh && conda activate mpc-gen && source /opt/ros/melodic/setup.bash && exec \"$@\"", "bash"]
 
 # This is the default command that runs if you don't provide one.
 # It will be executed by the ENTRYPOINT, dropping you into an interactive shell.
