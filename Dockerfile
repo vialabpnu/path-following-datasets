@@ -5,6 +5,7 @@ FROM ros:melodic-ros-base
 ARG USER=ubuntu
 ARG UID=1000
 ARG GID=1000
+ENV USER=${USER}
 
 # Create a user and group with the specified UID and GID
 RUN groupadd -g $GID $USER && \
@@ -73,7 +74,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 USER $USER
 
 # Clone the repository
-RUN git clone https://github.com/vialabpnu/path-following-datasets.git
+RUN git clone https://github.com/vialabpnu/path-following-datasets.git /home/$USER/path-following-datasets
 
 # Copy necessary files for dependencies (adjust paths if needed)
 COPY --chown=$USER:$USER py2_requirements_ros_melodic.txt /home/$USER/
