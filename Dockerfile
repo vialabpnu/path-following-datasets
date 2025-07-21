@@ -21,6 +21,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python-rosdep \
     python-rosinstall \
     python-rosinstall-generator \
+    python-backports.functools-lru-cache \
     python-wstool \
     build-essential \
     tmux \
