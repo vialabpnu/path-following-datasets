@@ -92,6 +92,10 @@ RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -
 # Add conda to PATH
 ENV PATH="/home/$USER/miniconda/bin:$PATH"
 
+# Accept Conda Terms of Service for required channels
+RUN conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main && \
+    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+
 # Create conda environment
 RUN conda env create -f mpc_environment.yml
 
