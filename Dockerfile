@@ -66,6 +66,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-melodic-joint-state-controller \
     ros-melodic-joint-state-controller-dbgsym \
     ros-melodic-nav-core \
+    ros-melodic-gazebo-ros \
+    ros-melodic-gazebo-plugins \
+    ros-melodic-gazebo-ros-control \
     python-pip \
     wget \
     bzip2 \
