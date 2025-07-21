@@ -92,7 +92,8 @@ COPY --chown=$USER:$USER supervisord.conf /etc/supervisor/conf.d/supervisord.con
 RUN pip2 install --upgrade pip==20.3.4 \
     && pip2 install -r py2_requirements_ros_melodic.txt
 
-RUN pip2 install backports.functools-lru-cache
+RUN pip2 install backports.functools-lru-cache \
+    && python2 -c "from backports.functools_lru_cache import lru_cache"
 
 # Install Miniconda
 RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh && \
