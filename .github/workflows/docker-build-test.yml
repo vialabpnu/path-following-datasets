@@ -28,32 +28,28 @@ jobs:
           load: true # 'load: true' makes the image available to the next step
           tags: path-following-env:latest
 
+      - name: Verify Conda environment
+        run: |
+          docker run --rm path-following-env:latest bash -c "conda info && conda env list"
+
+      - name: Verify ROS installation
+        run: |
+          docker run --rm path-following-env:latest rospack list
+
       - name: Smoke test the container
         run: |
-          echo "Starting container for a 30-seconds smoke test..."
+          echo "Starting container for a 30-second smoke test..."
           
-          # Run the container with a 30-seconds timeout.
           timeout 30s docker run --rm --workdir /home/ubuntu/path-following-datasets/examples/ \
             path-following-env:latest \
             bash runSimulator.sh
           
-          # Check the exit code of the 'timeout' command.
           status=$?
           
-          # Exit code 124 means it timed out. Exit code 0 means it finished before 5s.
-          # We consider both of these a success for a smoke test.
           if [ $status -eq 124 ] || [ $status -eq 0 ]; then
             echo "✅ Docker working normally. Smoke test passed."
-            exit 0 # Explicitly exit with success code.
+            exit 0
           else
             echo "❌ Error: Container exited with an unexpected status code: $status"
-            exit $status # Exit with the original error code to fail the job.
+            exit $status
           fi
-
-      - name: Verify Conda environment
-        run: |
-          docker run -it path-following-env:latest /bin/bash -c "conda info && conda env list"
-
-      - name: Verify ROS installation
-        run: |
-          docker run -it path-following-env:latest /bin/bash -c "source /opt/ros/melodic/setup.bash && rospack list"
