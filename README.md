@@ -1,8 +1,8 @@
-# Path-Following Dataset with Multi-Level Difficulty for Autonomous Driving in Unstructured Roads
+# Path-Following Dataset with Multi-Level Difficulty for Autonomous Driving in Unstructured Roads (ROS Noetic version: NOT MAINTAINED)
 
-![UBUNTU](https://img.shields.io/badge/UBUNTU-18.04-orange?style=plastic&logo=ubuntu)
-![python](https://img.shields.io/badge/Python-2.7-blue?style=plastic&logo=python)
-![ROS2](https://img.shields.io/badge/ROS-Melodic-white?style=plastic&logo=ros)
+![UBUNTU](https://img.shields.io/badge/UBUNTU-20.04-orange?style=plastic&logo=ubuntu)
+![python](https://img.shields.io/badge/Python-3.6+-blue?style=plastic&logo=python)
+![ROS2](https://img.shields.io/badge/ROS-Noetic-white?style=plastic&logo=ros)
 
 This repository contains a dataset for control algorithm benchmarking in unstructured environments, specifically targeting scenarios like parking lots where precise low-speed maneuvering is crucial. This dataset, based on detailed 2D HD maps from two distinct areas at Pusan National University (PNU), was created to address the need for specialized data to evaluate the performance of control algorithms for autonomous vehicles and robots navigating in such complex, real-world scenarios.
 
@@ -80,7 +80,7 @@ This section provides examples of how to use the path-following datasets.
 **Prerequisites:**
 
 * **Conda:** Make sure you have Conda installed on your system. If not, you can download and install Miniconda from [here](https://docs.conda.io/en/latest/miniconda.html).
-* **ROS Melodic:** This example requires ROS Melodic to be installed. You can find installation instructions on the [ROS website](http://wiki.ros.org/melodic/Installation).
+* **ROS Noetic:** This example requires ROS Noetic to be installed. You can find installation instructions on the [ROS website](http://wiki.ros.org/noetic/Installation).
 * **Ubuntu 18.04 or later:** This example is designed for Ubuntu 18.04 or later versions.
 
 **Running with ROS:**
@@ -93,7 +93,7 @@ git clone git@github.com:vialabpnu/path-following-datasets.git
 cd path-following-datasets
 
 # Install ROS dependencies
-./install_dependencies_ros_melodic.sh
+./install_dependencies_ros_noetic.sh
 
 # Navigate to the examples directory
 cd examples/car_ws
@@ -117,10 +117,10 @@ We provide a Docker image with all the necessary dependencies pre-installed.
 cd path-following-datasets
 
 # Build the Docker image
-docker build -t path-following-datasets:melodic .
+docker build -t path-following-datasets:noetic .
 
 # Run the Docker container
-docker run -it --network bridge path-following-datasets:melodic
+docker run -it --network bridge path-following-datasets:noetic
 ```
 
 Once inside the container, you can run the simulator:
@@ -171,7 +171,7 @@ This dataset is released under the **GPL-3.0 license**.
 
 This golf cart simulator utilizes Robotnik Automation's Gazebo-based Ackermann steering model (found in the repositories below), adapted and configured to match our specific golfcart vehicle platform.
 
-* [rbcar_sim](https://github.com/RobotnikAutomation/rbcar_sim/tree/melodic-devel-namespace) - Provides the core simulation packages.
-* [rbcar_common](https://github.com/RobotnikAutomation/rbcar_common/tree/melodic-devel-sim) - Contains common packages and utilities used in the simulation.
+* [rbcar_sim](https://github.com/RobotnikAutomation/rbcar_sim/tree/noetic-devel-namespace) - Provides the core simulation packages.
+* [rbcar_common](https://github.com/RobotnikAutomation/rbcar_common/tree/noetic-devel-sim) - Contains common packages and utilities used in the simulation.
 
 We extend our gratitude to the developers and contributors of these repositories for their valuable work.
