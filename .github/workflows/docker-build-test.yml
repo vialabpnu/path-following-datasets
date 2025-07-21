@@ -36,13 +36,13 @@ jobs:
         run: |
           docker run --rm path-following-env:latest rospack list
 
-      - name: Smoke test the container
+      - name: Smoke test the container with supervisord
         run: |
           echo "Starting container for a 30-second smoke test..."
           
-          timeout 30s docker run --rm --workdir /home/ubuntu/path-following-datasets/examples/ \
-            path-following-env:latest \
-            bash runSimulator.sh
+          # We explicitly tell Docker to run supervisord, overriding the default CMD ["/bin/bash"]
+          timeout 30s docker run --rm path-following-env:latest \
+            /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
           
           status=$?
           

@@ -24,6 +24,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python-wstool \
     build-essential \
     tmux \
+    supervisor \
     ros-melodic-catkin \
     ros-melodic-message-to-tf \
     ros-melodic-teleop-twist-joy \
@@ -85,6 +86,7 @@ RUN ls -l /home/$USER/path-following-datasets/examples
 COPY --chown=$USER:$USER py2_requirements_ros_melodic.txt /home/$USER/
 COPY --chown=$USER:$USER mpc_environment.yml /home/$USER/
 COPY --chown=$USER:$USER install_dependencies_ros_melodic.sh /home/$USER/
+COPY --chown=$USER:$USER supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Install Python 2 dependencies using pip2
 RUN pip2 install --upgrade pip==20.3.4 \
