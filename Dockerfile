@@ -88,12 +88,14 @@ COPY --chown=$USER:$USER mpc_environment.yml /home/$USER/
 COPY --chown=$USER:$USER install_dependencies_ros_melodic.sh /home/$USER/
 COPY --chown=$USER:$USER supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
+
+# Temporarily switch to root to install the package globally
+USER root
+
 # Install Python 2 dependencies using pip2
 RUN pip2 install --upgrade pip==20.3.4 \
     && pip2 install -r py2_requirements_ros_melodic.txt
 
-# Temporarily switch to root to install the package globally
-USER root
 RUN python2 -m pip install backports.functools-lru-cache \
     && python2 -c "from backports.functools_lru_cache import lru_cache"
 RUN pip2 install arrow==0.12.0 
