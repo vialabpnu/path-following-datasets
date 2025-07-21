@@ -120,7 +120,7 @@ SHELL ["conda", "run", "-n", "mpc-gen", "/bin/bash"]
 
 # You can add further instructions here, e.g., to build your ROS workspace if needed
 # Build the catkin workspace
-RUN /bin/bash -c "source /opt/ros/melodic/setup.bash && cd /home/$USER/path-following-datasets/examples/car_ws && catkin build"
+RUN source /opt/ros/melodic/setup.bash && cd /home/$USER/path-following-datasets/examples/car_ws && catkin build
 
 # Set entrypoint (optional - customize as needed)
 ENTRYPOINT ["conda", "run", "--no-capture-output", "-n", "mpc-gen", "bash"]
