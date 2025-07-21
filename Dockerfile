@@ -23,6 +23,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python-rosinstall-generator \
     python-backports.functools-lru-cache \
     python-wstool \
+    python-tk \
     build-essential \
     tmux \
     supervisor \
