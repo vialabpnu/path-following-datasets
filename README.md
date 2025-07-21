@@ -120,7 +120,7 @@ cd path-following-datasets
 docker build -t path-following-datasets:melodic .
 
 # Run the Docker container
-docker run -it path-following-datasets:melodic
+docker run -it --network bridge path-following-datasets:melodic
 ```
 
 Once inside the container, you can run the simulator:
