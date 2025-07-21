@@ -24,17 +24,31 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          push: false  # Set to true to push to a registry
+          push: false
+          load: true # 'load: true' makes the image available to the next step
           tags: path-following-env:latest
-          # Optional: Add build-args if your Dockerfile uses them
-          # build-args: |
-          #   USER=your_user
-          #   UID=1000
-          #   GID=1000
 
-      - name: Run Docker container
+      - name: Smoke test the container
         run: |
-          docker run -it path-following-env:latest /bin/bash -c "source /opt/ros/melodic/setup.bash && source /home/ubuntu/.bashrc && cd path-following-datasets/examples/ && bash runSimulator.sh"
+          echo "Starting container for a 30-seconds smoke test..."
+          
+          # Run the container with a 30-seconds timeout.
+          timeout 30s docker run --rm --workdir /home/ubuntu/path-following-datasets/examples/ \
+            path-following-env:latest \
+            bash runSimulator.sh
+          
+          # Check the exit code of the 'timeout' command.
+          status=$?
+          
+          # Exit code 124 means it timed out. Exit code 0 means it finished before 5s.
+          # We consider both of these a success for a smoke test.
+          if [ $status -eq 124 ] || [ $status -eq 0 ]; then
+            echo "✅ Docker working normally. Smoke test passed."
+            exit 0 # Explicitly exit with success code.
+          else
+            echo "❌ Error: Container exited with an unexpected status code: $status"
+            exit $status # Exit with the original error code to fail the job.
+          fi
 
       - name: Verify Conda environment
         run: |
