@@ -1,5 +1,5 @@
 # Path generation configuration
-# Map selection: 1 = physics_building, 2 = ee_building
+# Map selection: 1 = museum, 2 = ee_building
 map_choice: 1
 # Path difficulty: options are 'easy', 'hard', 'moderate'
 path_difficulty: easy
