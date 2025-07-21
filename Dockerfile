@@ -93,8 +93,8 @@ COPY --chown=$USER:$USER supervisord.conf /etc/supervisor/conf.d/supervisord.con
 USER root
 
 # Install Python 2 dependencies using pip2
-RUN pip2 install --upgrade pip==20.3.4 \
-    && pip2 install -r py2_requirements_ros_melodic.txt
+RUN python2 -m pip install --upgrade pip==20.3.4 \
+    && python2 -m pip install -r py2_requirements_ros_melodic.txt
 
 RUN python2 -m pip install backports.functools-lru-cache \
     && python2 -c "from backports.functools_lru_cache import lru_cache"
