@@ -120,8 +120,7 @@ SHELL ["conda", "run", "-n", "mpc-gen", "/bin/bash"]
 
 # You can add further instructions here, e.g., to build your ROS workspace if needed
 # Build the catkin workspace
-RUN bash -c "source /opt/ros/melodic/setup.bash && cd /home/$USER/path-following-datasets/examples/car_ws && catkin build"
+RUN ["/bin/bash", "-c", "source /opt/ros/melodic/setup.bash && cd /home/ubuntu/path-following-datasets/examples/car_ws && catkin build"]
 
-# Set entrypoint (optional - customize as needed)
-ENTRYPOINT ["conda", "run", "--no-capture-output", "-n", "mpc-gen", "bash"]
-CMD ["/bin/bash"]
+# This runs every time you start the container with 'docker run'.
+ENTRYPOINT ["/bin/bash", "-c", "source /opt/conda/etc/profile.d/conda.sh && conda activate mpc-gen && source /opt/ros/melodic/setup.bash && exec bash"]
