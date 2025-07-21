@@ -76,13 +76,13 @@ USER $USER
 RUN git clone https://github.com/vialabpnu/path-following-datasets.git
 
 # Copy necessary files for dependencies (adjust paths if needed)
-COPY --chown=$USER:$USER py2_requirements_ros.txt /home/$USER/
+COPY --chown=$USER:$USER py2_requirements_ros_melodic.txt /home/$USER/
 COPY --chown=$USER:$USER mpc_environment.yml /home/$USER/
-COPY --chown=$USER:$USER install_dependencies_ros.sh /home/$USER/
+COPY --chown=$USER:$USER install_dependencies_ros_melodic.sh /home/$USER/
 
 # Install Python 2 dependencies using pip2
-RUN pip install --upgrade pip==20.3.4 \
-    && pip install -r py2_requirements_ros.txt
+RUN pip2 install --upgrade pip==20.3.4 \
+    && pip2 install -r py2_requirements_ros_melodic.txt
 
 # Install Miniconda
 RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh && \
@@ -102,8 +102,8 @@ RUN rosdep init || true && \
 USER $USER
 
 # Run the dependency installation script
-RUN chmod +x /home/$USER/install_dependencies_ros.sh && \
-    /bin/bash -c "source /opt/ros/melodic/setup.bash && /home/$USER/install_dependencies_ros.sh"
+RUN chmod +x /home/$USER/install_dependencies_ros_melodic.sh && \
+    /bin/bash -c "source /opt/ros/melodic/setup.bash && /home/$USER/install_dependencies_ros_melodic.sh"
 
 # Activate conda environment for later use
 SHELL ["conda", "run", "-n", "mpc-gen", "/bin/bash"]
@@ -112,6 +112,8 @@ SHELL ["conda", "run", "-n", "mpc-gen", "/bin/bash"]
 # RUN echo "source /opt/ros/melodic/setup.bash" >> /home/$USER/.bashrc
 
 # You can add further instructions here, e.g., to build your ROS workspace if needed
+# Build the catkin workspace
+RUN /bin/bash -c "source /opt/ros/melodic/setup.bash && cd /home/$USER/path-following-datasets/examples/car_ws && catkin build"
 
 # Set entrypoint (optional - customize as needed)
 ENTRYPOINT ["conda", "run", "--no-capture-output", "-n", "mpc-gen", "bash"]
