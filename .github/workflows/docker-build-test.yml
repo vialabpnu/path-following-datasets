@@ -39,17 +39,25 @@ jobs:
       - name: Smoke test the container with supervisord
         run: |
           echo "Starting container for a 30-second smoke test..."
-          
-          # We explicitly tell Docker to run supervisord, overriding the default CMD ["/bin/bash"]
-          timeout 30s docker run --rm path-following-env:latest \
-            /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
-          
-          status=$?
-          
-          if [ $status -eq 124 ] || [ $status -eq 0 ]; then
+
+          # We wrap the command in an if/else structure to control the flow.
+          # This works correctly with GitHub's "fail-fast" mode.
+          if timeout 30s docker run --rm --user root path-following-env:latest \
+            /usr/bin/supervisord -c /etc/supervisor/supervisord.conf; then
+            
+            # This block only runs if the exit code was 0 (the container finished early)
             echo "✅ Docker working normally. Smoke test passed."
             exit 0
           else
-            echo "❌ Error: Container exited with an unexpected status code: $status"
-            exit $status
+            # This block runs for ANY non-zero exit code
+            status=$?
+            if [ $status -eq 124 ]; then
+              # The command timed out, which we consider a success for this test
+              echo "✅ Docker working normally. Smoke test passed."
+              exit 0
+            else
+              # The command failed with a different error code
+              echo "❌ Error: Container exited with an unexpected status code: $status"
+              exit $status
+            fi
           fi
