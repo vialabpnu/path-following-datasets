@@ -2,7 +2,7 @@ ipython==5.5.0
 ipython-genutils==0.2.0
 Jinja2==2.10
 joblib==0.11
-matplotlib==2.1.1
+matplotlib==2.0.2
 numpy==1.16.6
 osrf-pycommon==0.2.1
 pandas==0.24.2
@@ -18,5 +18,4 @@ tqdm==4.19.5
 trimesh==3.23.5
 urllib3==1.22
 vcstools==0.1.42
-
-
+backports.functools_lru_cache==1.2.1

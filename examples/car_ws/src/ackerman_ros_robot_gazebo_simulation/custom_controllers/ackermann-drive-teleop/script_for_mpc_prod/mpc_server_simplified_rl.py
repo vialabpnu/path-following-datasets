@@ -37,6 +37,14 @@ class ControlCommand:
     # Get the car_ws path
     car_ws_path = get_car_ws_path()
     def __init__(self, file_path_name = None, horizon_type="nonuni_sparse_var", eval_path_folder=None):
+        # Load vehicle_params.yaml from the project root (five levels up)
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        yaml_file_path = os.path.abspath(
+            os.path.join(script_dir, '../../../../../..', 'vehicle_params.yaml')
+        )
+        with open(yaml_file_path, 'r') as f:
+            self.vehicle_params = yaml.safe_load(f)
+        
         self.HEADER_SIZE = 10
         self.ipaddress = None
         self.CLIENT_ADDRESS = None
@@ -53,6 +61,12 @@ class ControlCommand:
         self.mpc = LinearMPCwithMP.LinearMPC(N=9, type=self.horizon_type) # N=9 (Current step 1 + 8 future steps)
         print(f"Weighting matrices: {self.mpc.Q_curve}")
         self.vehicle_state = LinearMPCwithMP.VehicleState()
+        
+        # Set the vehicle parameters in the MPC class
+        self.mpc.WB = self.vehicle_params['wheelbase']
+        self.mpc.MAX_STEER = self.vehicle_params['steering_angle_limit_rad']
+        self.mpc.MAX_DSTEER = self.vehicle_params['steering_angle_rate_limit_rad_s']
+        
         self.server_dt = self.mpc.DT
         self.plot_now = False
         self.plot_interval = 10
@@ -160,9 +174,10 @@ class ControlCommand:
 
         self.file_path_name = file_path_name
         self.save_path_dir = None
-        atexit.register(lambda: self.save_data())
-            # for saving data when KeyboardInterrupt
-        # signal.signal(signal.SIGINT, self.sigint_handler)
+        atexit.register(self.save_data)
+        # for saving data when KeyboardInterrupt
+        signal.signal(signal.SIGINT, lambda signum, frame: self.save_data() or sys.exit(0))
+        signal.signal(signal.SIGTERM, lambda signum, frame: self.save_data() or sys.exit(0))
 
     def save_data(self):
         minLen = []
@@ -473,12 +488,16 @@ if __name__ == "__main__":
     parser.add_argument("--eval", type=bool, default=False, help="Evaluate the MPC controller")
     parser.add_argument("--file_path_name", type=str, default=None, help="File path name")
     parser.add_argument("--eval_path_folder", type=str, default=None, help="Evaluation path folder")
+    parser.add_argument("--noise_on_state", type=bool, default=False, help="Add noise to the state")
+    parser.add_argument("--noise_on_position", type=float, default=0.0, help="SD of Noise on position x and y state (m)")
+    parser.add_argument("--noise_on_velocity", type=float, default=0.0, help="SD of Noise on velocity state (m/s)")
+    parser.add_argument("--noise_on_yaw", type=float, default=0.0, help="SD of Noise on yaw state (rad)")
+    
     args = parser.parse_args()
     file_path_name = args.file_path_name
     horizon_type = args.horizon_type
     comm = ControlCommand(file_path_name=file_path_name, horizon_type=horizon_type, eval_path_folder=args.eval_path_folder)
     signal.signal(signal.SIGTERM, comm.sigterm_handler)
-    # atexit.register(comm.save_data())
 
     while True:
         # Wait for a connection

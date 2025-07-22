@@ -21,9 +21,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python-rosdep \
     python-rosinstall \
     python-rosinstall-generator \
+    python-backports.functools-lru-cache \
     python-wstool \
+    python-tk \
     build-essential \
     tmux \
+    supervisor \
     ros-melodic-catkin \
     ros-melodic-message-to-tf \
     ros-melodic-teleop-twist-joy \
@@ -66,23 +69,34 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-melodic-joint-state-controller \
     ros-melodic-joint-state-controller-dbgsym \
     ros-melodic-nav-core \
+    ros-melodic-gazebo-ros \
+    ros-melodic-gazebo-plugins \
+    ros-melodic-gazebo-ros-control \
     python-pip \
     wget \
     bzip2 \
     && rm -rf /var/lib/apt/lists/*
 USER $USER
 
-# Clone the repository
-RUN git clone https://github.com/vialabpnu/path-following-datasets.git
+# Clone the repository to the correct location
+RUN git clone https://github.com/vialabpnu/path-following-datasets.git /home/$USER/path-following-datasets
+
+# (Optional) Debug: List contents to verify
+RUN ls -l /home/$USER/path-following-datasets/examples
 
 # Copy necessary files for dependencies (adjust paths if needed)
-COPY --chown=$USER:$USER py2_requirements_ros.txt /home/$USER/
+COPY --chown=$USER:$USER py2_requirements_ros_melodic.txt /home/$USER/
 COPY --chown=$USER:$USER mpc_environment.yml /home/$USER/
-COPY --chown=$USER:$USER install_dependencies_ros.sh /home/$USER/
+COPY --chown=$USER:$USER install_dependencies_ros_melodic.sh /home/$USER/
+COPY --chown=$USER:$USER supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
 
 # Install Python 2 dependencies using pip2
-RUN pip install --upgrade pip==20.3.4 \
-    && pip install -r py2_requirements_ros.txt
+RUN python2 -m pip install --upgrade pip==20.3.4 \
+    && python2 -m pip install -r py2_requirements_ros_melodic.txt
+
+# Now, we can verify that the 'ubuntu' user can find the globally installed package
+RUN python2 -c "from backports.functools_lru_cache import lru_cache"
 
 # Install Miniconda
 RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh && \
@@ -91,6 +105,10 @@ RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -
 
 # Add conda to PATH
 ENV PATH="/home/$USER/miniconda/bin:$PATH"
+
+# Accept Conda Terms of Service for required channels
+RUN conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main && \
+    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
 
 # Create conda environment
 RUN conda env create -f mpc_environment.yml
@@ -102,8 +120,8 @@ RUN rosdep init || true && \
 USER $USER
 
 # Run the dependency installation script
-RUN chmod +x /home/$USER/install_dependencies_ros.sh && \
-    /bin/bash -c "source /opt/ros/melodic/setup.bash && /home/$USER/install_dependencies_ros.sh"
+RUN chmod +x /home/$USER/install_dependencies_ros_melodic.sh && \
+    /bin/bash -c "source /opt/ros/melodic/setup.bash && /home/$USER/install_dependencies_ros_melodic.sh"
 
 # Activate conda environment for later use
 SHELL ["conda", "run", "-n", "mpc-gen", "/bin/bash"]
@@ -112,7 +130,12 @@ SHELL ["conda", "run", "-n", "mpc-gen", "/bin/bash"]
 # RUN echo "source /opt/ros/melodic/setup.bash" >> /home/$USER/.bashrc
 
 # You can add further instructions here, e.g., to build your ROS workspace if needed
+# Build the catkin workspace
+RUN ["/bin/bash", "-c", "source /opt/ros/melodic/setup.bash && cd /home/ubuntu/path-following-datasets/examples/car_ws && catkin build"]
 
-# Set entrypoint (optional - customize as needed)
-ENTRYPOINT ["conda", "run", "--no-capture-output", "-n", "mpc-gen", "bash"]
+# This runs every time you start the container with 'docker run'.
+ENTRYPOINT ["/bin/bash", "-c", "source /home/ubuntu/miniconda/etc/profile.d/conda.sh && conda activate mpc-gen && source /opt/ros/melodic/setup.bash && exec \"$@\"", "bash"]
+
+# This is the default command that runs if you don't provide one.
+# It will be executed by the ENTRYPOINT, dropping you into an interactive shell.
 CMD ["/bin/bash"]

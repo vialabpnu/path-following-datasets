@@ -93,7 +93,7 @@ git clone git@github.com:vialabpnu/path-following-datasets.git
 cd path-following-datasets
 
 # Install ROS dependencies
-./install_dependencies_ros.sh
+./install_dependencies_ros_melodic.sh
 
 # Navigate to the examples directory
 cd examples/car_ws
@@ -108,18 +108,43 @@ cd ..
 
 * After running these commands, the simulation saves its logs to the ```examples/car_ws/src/MPCSimulationRunner/data/eval_test``` directory.
 
-<!-- **Running through Docker:**
-We also provide a Docker image with all the necessary dependencies pre-installed.
-```bash
-# Pull and run the image
-docker run -it <docker_image_name> 
+## Running with Docker
 
-# Navigate to the examples directory (inside the container)
+We provide a Docker image with all the necessary dependencies pre-installed.
+
+```bash
+# Change to the project directory (where the Dockerfile is located)
 cd path-following-datasets
 
-# Run the simulator
-./runSimulator.sh
-``` -->
+# Build the Docker image
+docker build -t path-following-datasets:melodic .
+
+# Run the Docker container
+docker run -it --network bridge path-following-datasets:melodic
+```
+
+Once inside the container, you can run the simulator:
+
+```bash
+cd path-following-datasets
+./examples/runSimulator.sh
+```
+
+## Generating Custom Paths and Difficulty Classification
+
+To generate your own paths and classify their difficulty based on different vehicle parameters or vehicle models:
+
+- **Edit Configuration Files:**  
+  Adjust the settings in both `path_generation/generation_config.yaml` and `vehicle_params.yaml` to match your desired vehicle model, parameters, or path generation preferences.
+
+- **Generate Paths in MATLAB:**  
+  Open MATLAB and run `PathGenerator.m`  
+  This script will use the parameters from both configuration files to generate new paths.
+
+- **Automatic Difficulty Classification:**  
+  The generated paths will be automatically classified into different difficulty levels (easy, moderate, hard) based on their curvature and the specified configuration and vehicle parameters.
+
+By modifying these configuration files and regenerating the dataset, you can benchmark control algorithms for a variety of vehicle types and scenarios with your own custom map.
 
 <!-- ## Citation
 

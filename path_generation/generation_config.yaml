@@ -1,0 +1,15 @@
+# Path generation configuration
+# Map selection: 1 = museum, 2 = ee_building
+map_choice: 1
+# Path difficulty: options are 'easy', 'hard', 'moderate'
+path_difficulty: easy
+# Number of paths to generate
+total_paths_to_generate: 400
+# Toggles
+manual_path_generation: false
+testing: false
+# Use pre load map file (If previously .mat file of loaded map is available enable this except
+# if you want to use a different map or changing the parameters of the map)
+use_pre_load_map: false
+# Inflation radius for collision checking [m]
+inflation_radius: 1.25

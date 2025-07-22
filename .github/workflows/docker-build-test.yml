@@ -24,22 +24,41 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          push: false  # Set to true to push to a registry
+          push: false
+          load: true # 'load: true' makes the image available to the next step
+          no-cache: true
           tags: path-following-env:latest
-          # Optional: Add build-args if your Dockerfile uses them
-          # build-args: |
-          #   USER=your_user
-          #   UID=1000
-          #   GID=1000
-
-      - name: Run Docker container
-        run: |
-          docker run -it path-following-env:latest /bin/bash -c "source /opt/ros/melodic/setup.bash && source /home/ubuntu/.bashrc && cd path-following-datasets/examples/ && bash runSimulator.sh"
 
       - name: Verify Conda environment
         run: |
-          docker run -it path-following-env:latest /bin/bash -c "conda info && conda env list"
+          docker run --rm path-following-env:latest bash -c "conda info && conda env list"
 
       - name: Verify ROS installation
         run: |
-          docker run -it path-following-env:latest /bin/bash -c "source /opt/ros/melodic/setup.bash && rospack list"
+          docker run --rm path-following-env:latest rospack list
+
+      - name: Smoke test the container with supervisord
+        run: |
+          echo "Starting container for a 30-second smoke test..."
+
+          # We wrap the command in an if/else structure to control the flow.
+          # This works correctly with GitHub's "fail-fast" mode.
+          if timeout 30s docker run --rm --user root path-following-env:latest \
+            /usr/bin/supervisord -c /etc/supervisor/supervisord.conf; then
+            
+            # This block only runs if the exit code was 0 (the container finished early)
+            echo "✅ Docker working normally. Smoke test passed."
+            exit 0
+          else
+            # This block runs for ANY non-zero exit code
+            status=$?
+            if [ $status -eq 124 ]; then
+              # The command timed out, which we consider a success for this test
+              echo "✅ Docker working normally. Smoke test passed."
+              exit 0
+            else
+              # The command failed with a different error code
+              echo "❌ Error: Container exited with an unexpected status code: $status"
+              exit $status
+            fi
+          fi
