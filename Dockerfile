@@ -21,7 +21,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python-rosdep \
     python-rosinstall \
     python-rosinstall-generator \
+    python-backports.functools-lru-cache \
     python-wstool \
+    python-tk \
     build-essential \
     tmux \
     supervisor \
@@ -88,9 +90,13 @@ COPY --chown=$USER:$USER mpc_environment.yml /home/$USER/
 COPY --chown=$USER:$USER install_dependencies_ros_melodic.sh /home/$USER/
 COPY --chown=$USER:$USER supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
+
 # Install Python 2 dependencies using pip2
-RUN pip2 install --upgrade pip==20.3.4 \
-    && pip2 install -r py2_requirements_ros_melodic.txt
+RUN python2 -m pip install --upgrade pip==20.3.4 \
+    && python2 -m pip install -r py2_requirements_ros_melodic.txt
+
+# Now, we can verify that the 'ubuntu' user can find the globally installed package
+RUN python2 -c "from backports.functools_lru_cache import lru_cache"
 
 # Install Miniconda
 RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh && \

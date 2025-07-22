@@ -26,6 +26,7 @@ jobs:
           context: .
           push: false
           load: true # 'load: true' makes the image available to the next step
+          no-cache: true
           tags: path-following-env:latest
 
       - name: Verify Conda environment
