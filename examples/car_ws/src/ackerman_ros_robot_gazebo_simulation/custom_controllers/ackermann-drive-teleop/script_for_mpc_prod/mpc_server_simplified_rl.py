@@ -40,7 +40,7 @@ class ControlCommand:
         # Load vehicle_params.yaml from the project root (five levels up)
         script_dir = os.path.dirname(os.path.abspath(__file__))
         yaml_file_path = os.path.abspath(
-            os.path.join(script_dir, '../../../../../..', 'vehicle_params.yaml')
+            os.path.join(script_dir, '../../../../../../..', 'vehicle_params.yaml')
         )
         with open(yaml_file_path, 'r') as f:
             self.vehicle_params = yaml.safe_load(f)
