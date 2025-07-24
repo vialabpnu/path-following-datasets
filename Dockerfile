@@ -1,22 +1,19 @@
 # Use a base image with ROS Melodic pre-installed
 FROM ros:melodic-ros-base
 
-# Set the user to a non-root user (e.g., the default user in the ros image)
+# Set arguments for a non-root user
 ARG USER=ubuntu
 ARG UID=1000
 ARG GID=1000
 
-# Create a user and group with the specified UID and GID
+# Create user and group
 RUN groupadd -g $GID $USER && \
     useradd -u $UID -g $GID -m $USER
 
-# Set working directory to the user's home directory
-USER $USER
-WORKDIR /home/$USER
-
-# Install system dependencies (as the non-root user)
+# Install system dependencies as root
 USER root
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
     python-catkin-tools \
     python-rosdep \
     python-rosinstall \
@@ -76,26 +73,33 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     bzip2 \
     && rm -rf /var/lib/apt/lists/*
-USER $USER
 
-# Clone the repository to the correct location
+# Switch to non-root user and set working directory
+USER $USER
+WORKDIR /home/$USER
+
+# Clone the repository which contains all necessary config files
 RUN git clone https://github.com/vialabpnu/path-following-datasets.git /home/$USER/path-following-datasets
 
-# (Optional) Debug: List contents to verify
-RUN ls -l /home/$USER/path-following-datasets/examples
+# --- FIX START ---
+# Move files from the cloned repository to their required locations
+# User-level files go into the home directory
+RUN cp /home/$USER/path-following-datasets/py2_requirements_ros_melodic.txt /home/$USER/ && \
+    cp /home/$USER/path-following-datasets/mpc_environment.yml /home/$USER/ && \
+    cp /home/$USER/path-following-datasets/install_dependencies_ros_melodic.sh /home/$USER/
 
-# Copy necessary files for dependencies (adjust paths if needed)
-COPY --chown=$USER:$USER py2_requirements_ros_melodic.txt /home/$USER/
-COPY --chown=$USER:$USER mpc_environment.yml /home/$USER/
-COPY --chown=$USER:$USER install_dependencies_ros_melodic.sh /home/$USER/
-COPY --chown=$USER:$USER supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+# Switch to root to place system-level config files
+USER root
+RUN cp /home/$USER/path-following-datasets/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+# Switch back to the non-root user
+USER $USER
+# --- FIX END ---
 
+# Install Python 2 dependencies
+RUN python2 -m pip install --upgrade pip==20.3.4 && \
+    python2 -m pip install -r py2_requirements_ros_melodic.txt
 
-# Install Python 2 dependencies using pip2
-RUN python2 -m pip install --upgrade pip==20.3.4 \
-    && python2 -m pip install -r py2_requirements_ros_melodic.txt
-
-# Now, we can verify that the 'ubuntu' user can find the globally installed package
+# Verify package installation
 RUN python2 -c "from backports.functools_lru_cache import lru_cache"
 
 # Install Miniconda
@@ -113,7 +117,7 @@ RUN conda tos accept --override-channels --channel https://repo.anaconda.com/pkg
 # Create conda environment
 RUN conda env create -f mpc_environment.yml
 
-# Initialize rosdep
+# Initialize rosdep as root
 USER root
 RUN rosdep init || true && \
     rosdep update
@@ -123,19 +127,16 @@ USER $USER
 RUN chmod +x /home/$USER/install_dependencies_ros_melodic.sh && \
     /bin/bash -c "source /opt/ros/melodic/setup.bash && /home/$USER/install_dependencies_ros_melodic.sh"
 
-# Activate conda environment for later use
-SHELL ["conda", "run", "-n", "mpc-gen", "/bin/bash"]
+# Activate conda environment for all subsequent commands
+SHELL ["conda", "run", "-n", "mpc-gen", "/bin/bash", "-c"]
 
-# Source ROS setup (Optional), It should automatically done as we used the ros docker image
-# RUN echo "source /opt/ros/melodic/setup.bash" >> /home/$USER/.bashrc
-
-# You can add further instructions here, e.g., to build your ROS workspace if needed
 # Build the catkin workspace
-RUN ["/bin/bash", "-c", "source /opt/ros/melodic/setup.bash && cd /home/ubuntu/path-following-datasets/examples/car_ws && catkin build"]
+RUN source /opt/ros/melodic/setup.bash && \
+    cd /home/ubuntu/path-following-datasets/examples/car_ws && \
+    catkin build
 
-# This runs every time you start the container with 'docker run'.
-ENTRYPOINT ["/bin/bash", "-c", "source /home/ubuntu/miniconda/etc/profile.d/conda.sh && conda activate mpc-gen && source /opt/ros/melodic/setup.bash && exec \"$@\"", "bash"]
+# Set the final container entrypoint
+ENTRYPOINT ["/bin/bash", "-c", "source /home/ubuntu/miniconda/etc/profile.d/conda.sh && conda activate mpc-gen && source /opt/ros/melodic/setup.bash && source /home/ubuntu/path-following-datasets/examples/car_ws/devel/setup.bash && exec \"$@\"", "bash"]
 
-# This is the default command that runs if you don't provide one.
-# It will be executed by the ENTRYPOINT, dropping you into an interactive shell.
+# Default command to run
 CMD ["/bin/bash"]
