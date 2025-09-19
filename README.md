@@ -102,7 +102,6 @@ cd path_following_simulator
 catkin build
 
 # Run the simulator
-cd ..
 ./runSimulator.sh
 ```
 
