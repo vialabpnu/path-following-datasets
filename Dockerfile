@@ -127,13 +127,22 @@ USER $USER
 RUN chmod +x /home/ubuntu/install_dependencies_ros_melodic.sh && \
     /bin/bash -c "source /opt/ros/melodic/setup.bash && /home/ubuntu/install_dependencies_ros_melodic.sh"
 
-# Activate conda environment for all subsequent commands
-SHELL ["conda", "run", "-n", "mpc-gen", "/bin/bash", "-c"]
+# Initialize rosdep and install ROS dependencies
+USER root
+RUN rosdep init || true
+USER ubuntu
+RUN rosdep update && \
+    cd /home/ubuntu/path-following-datasets/path_following_simulator && \
+    source /opt/ros/melodic/setup.bash && \
+    rosdep install --from-paths src --ignore-src -r -y
 
-# Build the catkin workspace
+# Build the catkin workspace (without conda shell to avoid conflicts)
 RUN source /opt/ros/melodic/setup.bash && \
     cd /home/ubuntu/path-following-datasets/path_following_simulator && \
     catkin build
+
+# Activate conda environment for all subsequent commands
+SHELL ["conda", "run", "-n", "mpc-gen", "/bin/bash", "-c"]
 
 # Set the final container entrypoint
 ENTRYPOINT ["/bin/bash", "-c", "source /home/ubuntu/miniconda/etc/profile.d/conda.sh && conda activate mpc-gen && source /opt/ros/melodic/setup.bash && source /home/ubuntu/path-following-datasets/path_following_simulator/devel/setup.bash && exec \"$@\"", "bash"]
