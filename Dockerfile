@@ -85,7 +85,7 @@ RUN git clone https://github.com/vialabpnu/path-following-datasets.git /home/$US
 # Move files from the cloned repository to their required locations
 # User-level files go into the home directory
 RUN cp /home/$USER/path-following-datasets/py2_requirements_ros_melodic.txt /home/$USER/ && \
-    cp /home/$USER/path-following-datasets/mpc_environment.yml /home/$USER/ && \
+    cp /home/$USER/path-following-datasets/mpc_dependencies.yml /home/$USER/ && \
     cp /home/$USER/path-following-datasets/install_dependencies_ros_melodic.sh /home/$USER/
 
 # Switch to root to place system-level config files
@@ -115,7 +115,7 @@ RUN conda tos accept --override-channels --channel https://repo.anaconda.com/pkg
     conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
 
 # Create conda environment
-RUN conda env create -f mpc_environment.yml
+RUN conda env create -f mpc_dependencies.yml
 
 # Initialize rosdep as root
 USER root
@@ -132,11 +132,11 @@ SHELL ["conda", "run", "-n", "mpc-gen", "/bin/bash", "-c"]
 
 # Build the catkin workspace
 RUN source /opt/ros/melodic/setup.bash && \
-    cd /home/ubuntu/path-following-datasets/examples/car_ws && \
+    cd /home/ubuntu/path-following-datasets/path_following_simulator && \
     catkin build
 
 # Set the final container entrypoint
-ENTRYPOINT ["/bin/bash", "-c", "source /home/ubuntu/miniconda/etc/profile.d/conda.sh && conda activate mpc-gen && source /opt/ros/melodic/setup.bash && source /home/ubuntu/path-following-datasets/examples/car_ws/devel/setup.bash && exec \"$@\"", "bash"]
+ENTRYPOINT ["/bin/bash", "-c", "source /home/ubuntu/miniconda/etc/profile.d/conda.sh && conda activate mpc-gen && source /opt/ros/melodic/setup.bash && source /home/ubuntu/path-following-datasets/path_following_simulator/devel/setup.bash && exec \"$@\"", "bash"]
 
 # Default command to run
 CMD ["/bin/bash"]
