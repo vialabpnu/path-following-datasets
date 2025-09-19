@@ -120,7 +120,7 @@
             </geometry>
             <max_contacts>10</max_contacts>
             <surface>
-                <!-- Friction of Dry Asphalt -->
+                <!-- Friction of Dry Asphalt (Change the friction here) -->
                 <friction>
                 <ode>
                     <mu>0.85</mu>
@@ -137,7 +137,8 @@
                 <size>1000 1000 0.1</size>
                 </box>
             </geometry>
-            <material>
+            <material> 
+                <!-- Only for visual color and texture, doesnt affect the actual friction -->
                 <script>
                 <uri>model://asphalt_plane/materials/scripts</uri>
                 <uri>model://asphalt_plane/materials/textures</uri>
