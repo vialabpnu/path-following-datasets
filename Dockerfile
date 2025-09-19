@@ -79,7 +79,7 @@ USER $USER
 WORKDIR /home/$USER
 
 # Clone the repository which contains all necessary config files
-RUN git clone https://github.com/vialabpnu/path-following-datasets.git /home/ubuntu/path-following-datasets
+RUN git clone --branch dev https://github.com/vialabpnu/path-following-datasets.git /home/ubuntu/path-following-datasets
 
 # --- FIX START ---
 # Move files from the cloned repository to their required locations
