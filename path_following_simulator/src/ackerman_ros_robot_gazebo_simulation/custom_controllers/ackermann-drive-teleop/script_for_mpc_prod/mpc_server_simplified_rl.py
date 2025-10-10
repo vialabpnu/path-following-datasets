@@ -38,10 +38,7 @@ class ControlCommand:
     car_ws_path = get_car_ws_path()
     def __init__(self, file_path_name = None, horizon_type="nonuni_sparse_var", eval_path_folder=None):
         # Load vehicle_params.yaml from the project root (five levels up)
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        yaml_file_path = os.path.abspath(
-            os.path.join(script_dir, '../../../../../../..', 'path_following_simulator/config/vehicle_params.yaml')
-        )
+        yaml_file_path = os.path.join(self.car_ws_path, 'config/vehicle_params.yaml')
         with open(yaml_file_path, 'r') as f:
             self.vehicle_params = yaml.safe_load(f)
         

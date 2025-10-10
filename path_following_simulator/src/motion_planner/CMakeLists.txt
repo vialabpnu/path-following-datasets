@@ -10,7 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
    FILES
    State.msg
-   local_path.msg
+   LocalPath.msg
 )
 
 generate_messages(

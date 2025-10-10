@@ -7,7 +7,7 @@
     <remap from="joint_states" to="rbcar/joint_states"/>
     <param name="model" value="rbcar"/>
     <param name="publish_odom_tf" value="$(arg publish_tf)"/>
-    <rosparam file="$(find rbcar_robot_control)/config/delay_params.yaml" command="load" />
+    <rosparam file="$(find rbcar_robot_control)/../../../../config/delay_params.yaml" command="load" />
   </node> 
   
 </launch>
