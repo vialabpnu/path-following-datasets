@@ -1,0 +1,31 @@
+# Environment Parameters for Path Following Simulator
+# These parameters control the simulation environment conditions
+
+# Road surface friction coefficients
+# These values affect tire-ground contact in the Gazebo world file
+road_conditions:
+  icy:
+    mu: 0.1      # Longitudinal friction coefficient
+    mu2: 0.1     # Lateral friction coefficient
+    description: "Icy road conditions - very low friction"
+
+  wet:
+    mu: 0.55     # Longitudinal friction coefficient
+    mu2: 0.55    # Lateral friction coefficient
+    description: "Wet asphalt - moderate friction"
+
+  dry:
+    mu: 0.85     # Longitudinal friction coefficient
+    mu2: 0.85    # Lateral friction coefficient
+    description: "Dry asphalt - high friction (default)"
+
+# Active road condition (will be updated by update_simulation_from_yaml.py)
+active_road_condition: "dry"
+
+# Wind disturbance parameters (optional, for future implementation)
+wind:
+  enabled: false
+  direction_deg: 0        # Wind direction (0=North, 90=East, 180=South, 270=West)
+  mean_speed_mps: 0.0     # Mean wind speed in meters per second
+  turbulence_intensity: 0.1  # Turbulence intensity (0.0-1.0)
+  gust_frequency_hz: 0.1     # Frequency of wind gusts in Hz

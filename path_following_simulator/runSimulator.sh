@@ -8,20 +8,24 @@ HOME_DIR="/home/$USER_NAME"
 CAR_WS_PATH="$HOME_DIR/path-following-datasets/path_following_simulator"
 DATASET_PATH="$HOME_DIR/path-following-datasets/path_datasets"
 
+# Export environment variables for scripts
+export CAR_WS_PATH
+export DATASET_PATH
+
 xdotool windowsize $(xdotool getactivewindow) 100% 100%
 
 tmux kill-session -t 'simrun'
 sleep 1
 
-tmux new-session -d -s 'simrun'  # Added closing quote
+tmux new-session -d -s 'simrun'
 
-# Update xacro files from vehicle_params.yaml before starting simulation
-echo "Updating xacro files from vehicle_params.yaml..."
-python "$CAR_WS_PATH/config/update_xacro_from_yaml.py"
+# Update simulation files from YAML configuration (vehicle + environment)
+echo "Updating simulation files from YAML configuration..."
+python "$CAR_WS_PATH/config/update_simulation_from_yaml.py"
 if [ $? -eq 0 ]; then
-    echo "Xacro files updated successfully"
+    echo "Simulation files updated successfully"
 else
-    echo "Warning: Failed to update xacro files"
+    echo "Warning: Failed to update simulation files"
 fi
 
 tmux rename-window 'Simulator Running Example'

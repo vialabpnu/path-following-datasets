@@ -97,7 +97,7 @@
       <axis xyz="0 0 -1"/>
       <limit lower="${-wheel_travel / 2}" upper="${wheel_travel / 2}"
              effort="${shock_eff_limit}" velocity="${shock_vel_limit}"/>
-      <joint_properties damping="${suspension_joint_damping}" friction="{suspension_joint_friction}"/>
+      <joint_properties damping="${suspension_joint_damping}" friction="${suspension_joint_friction}"/>
     </joint>    
 
     <transmission name="${lr_prefix}_${fr_prefix}_shock_trans">
@@ -139,7 +139,7 @@
       <origin rpy="${degrees_90} 0 ${degrees_180}"/>
       <axis xyz="0 0 -1"/>
       <limit effort="${axle_eff_limit}" velocity="${axle_vel_limit}"/>
-      <joint_properties damping="${wheel_joint_damping}" friction="{wheel_joint_friction}"/>
+      <joint_properties damping="${wheel_joint_damping}" friction="${wheel_joint_friction}"/>
     </joint>
     
  
