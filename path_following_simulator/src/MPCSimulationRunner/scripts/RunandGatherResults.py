@@ -129,8 +129,8 @@ class RunandGatherResults:
             update_xacro_from_yaml.main()
 
             for noise_param, dataset_param, run_param in zip(self.noisy_odom_params, self.dataset_class_params, self.run_params):
-            # --- START: NEW PATH FILTERING LOGIC ---
-            current_path_files_list = []
+                # --- START: NEW PATH FILTERING LOGIC ---
+                current_path_files_list = []
 
             # 1. Filter Easy paths (starting with 'E_')
             if dataset_param.get('enable_easy', False):
