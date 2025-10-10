@@ -185,24 +185,34 @@ class RunandGatherResults:
 
             # Launch Gazebo (ros-bringup)
             self.logger.info("Launching Gazebo simulation...")
-            gazebo_cmd = (
-                f"source /opt/ros/melodic/setup.bash && "
-                f"source {self.current_workspace_dir}/devel/setup.bash && "
-                f"roslaunch rbcar_sim_bringup rbcar_complete_rl.launch"
+
+            # Send commands step by step to tmux (like in runSimulator.sh)
+            self.tmux.send_command("main", f"source /opt/ros/melodic/setup.bash", wait_for_enter=True)
+            self.tmux.send_command("main", f"source {self.current_workspace_dir}/devel/setup.bash", wait_for_enter=True)
+            self.tmux.send_command("main", "roslaunch rbcar_sim_bringup rbcar_complete_rl.launch", wait_for_enter=True)
+
+            self.logger.info("Waiting for Gazebo to start...")
+            time.sleep(10)
+
+            # Check if Gazebo actually started by looking for Gazebo topics
+            self.logger.info("Verifying Gazebo is running...")
+            result = subprocess.run(
+                ["rostopic", "list"],
+                capture_output=True,
+                timeout=5
             )
-            self.tmux.send_command("main", gazebo_cmd)
-            time.sleep(5)
+            if b"/gazebo/" in result.stdout:
+                self.logger.info("✓ Gazebo is running (found /gazebo/ topics)")
+            else:
+                self.logger.warning("⚠ Gazebo topics not found, but continuing anyway")
 
             # Launch robot control
             self.logger.info("Launching robot control...")
             self.tmux.create_pane("control", split_from="main", split_direction='h')
-            control_cmd = (
-                f"source /opt/ros/melodic/setup.bash && "
-                f"source {self.current_workspace_dir}/devel/setup.bash && "
-                f"roslaunch rbcar_control rbcar_control.launch"
-            )
-            self.tmux.send_command("control", control_cmd)
-            time.sleep(3)
+            self.tmux.send_command("control", f"source /opt/ros/melodic/setup.bash", wait_for_enter=True)
+            self.tmux.send_command("control", f"source {self.current_workspace_dir}/devel/setup.bash", wait_for_enter=True)
+            self.tmux.send_command("control", "roslaunch rbcar_control rbcar_control.launch", wait_for_enter=True)
+            time.sleep(5)
 
             self.logger.info("Gazebo and robot control launched successfully")
             self.ros_stack_launched = True
