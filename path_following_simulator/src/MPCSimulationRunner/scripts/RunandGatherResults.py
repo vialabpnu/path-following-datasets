@@ -10,6 +10,13 @@ import yaml
 
 from typing import Dict, List, Any
 
+# Add the path to the update_xacro_from_yaml script to the system path
+script_dir = os.path.dirname(os.path.abspath(__file__))
+config_path = os.path.join(script_dir, '..', '..', '..', 'config')
+sys.path.append(config_path)
+
+import update_xacro_from_yaml
+
 def shutdown_sim(process_list, gracetime_s=0.1):
     """Shuts down a list of processes gracefully."""
     for process in process_list:
@@ -36,7 +43,7 @@ def shutdown_sim(process_list, gracetime_s=0.1):
 
 
 class RunandGatherResults:
-    def __init__(self, config_file: str, current_workspace_dir: str, current_dataset_dir: str, noisy_odom_params: Dict[str, Any], dataset_class_params: Dict[str, Any], run_params: Dict[str, Any]) -> None:
+    def __init__(self, config_file: str, current_workspace_dir: str, current_dataset_dir: str, noisy_odom_params: Dict[str, Any], dataset_class_params: Dict[str, Any], run_params: Dict[str, Any], vehicle_params_list: List[Dict[str, Any]]) -> None:
         self.run_command = config_file['run_command']
         self.run_command_mpc_server = self.run_command['mpc_server']
         self.run_command_mpc_node = self.run_command['mpc_node']
@@ -61,6 +68,7 @@ class RunandGatherResults:
         self.save_results_in_eval_test_folder = True
         self.process_list = []
         self.gazebo_reset_command = "rosservice call /gazebo/reset_simulation {}"
+        self.vehicle_params_list = vehicle_params_list
         if not noisy_odom_params:
             # Default: all noise disabled, stddevs can be set to 0 or any default
             self.noisy_odom_params = [{
@@ -111,7 +119,16 @@ class RunandGatherResults:
         self.logger.info(f"Evaluation results path target: {self.eval_results_path_target}")
 
     def run_simulation(self):
-        for noise_param, dataset_param, run_param in zip(self.noisy_odom_params, self.dataset_class_params, self.run_params):
+        for vehicle_params in self.vehicle_params_list:
+            self.logger.info(f"Updating vehicle parameters: {vehicle_params}")
+            vehicle_params_path = os.path.join(self.current_workspace_dir, 'config', 'vehicle_params.yaml')
+            with open(vehicle_params_path, 'w') as f:
+                yaml.dump(vehicle_params, f)
+
+            self.logger.info("Updating xacro files...")
+            update_xacro_from_yaml.main()
+
+            for noise_param, dataset_param, run_param in zip(self.noisy_odom_params, self.dataset_class_params, self.run_params):
             # --- START: NEW PATH FILTERING LOGIC ---
             current_path_files_list = []
 
@@ -273,23 +290,41 @@ if __name__ == '__main__':
     car_ws_path = str(car_ws_path)
     datasets_path = str(datasets_path)
 
-    # Update xacro files from vehicle_params.yaml before starting simulations
-    print("Updating xacro files from vehicle_params.yaml...")
-    xacro_update_script = os.path.join(car_ws_path, 'config', 'update_xacro_from_yaml.py')
-    try:
-        result = subprocess.run(['python', xacro_update_script], capture_output=True, text=True)
-        if result.returncode == 0:
-            print("Xacro files updated successfully")
-            print(result.stdout)
-        else:
-            print("Warning: Failed to update xacro files")
-            print(result.stderr)
-    except Exception as e:
-        print(f"Warning: Could not run xacro update script: {e}")
     default_path = os.path.join(car_ws_path, 'src/MPCSimulationRunner/config/config_run_gather.yaml')
     parser.add_argument('--config_file', type=str, default=default_path, help='Path to the configuration file', required=False)
     config_file_path = parser.parse_args().config_file
     config_file = yaml.safe_load(open(config_file_path, 'r'))
+
+    # Define a list of vehicle parameter sets to test
+    # If this list is empty, the script will fall back to reading the vehicle_params.yaml file
+    vehicle_params_list = [
+        {
+            # Golf Cart
+            'wheelbase': 2.48,
+            'weight': 600,
+            'length': 3.74,
+            'width': 1.20,
+            'height': 0.2, # Using default value
+            'steering_angle_limit_rad': 0.4433, # 25.4 deg
+            'steering_angle_rate_limit_rad_s': 0.1400 # 8.02 deg/s
+        },
+        {
+            # Sedan (Sonata)
+            'wheelbase': 2.84,
+            'weight': 1700,
+            'length': 4.90,
+            'width': 1.86,
+            'height': 0.2, # Using default value
+            'steering_angle_limit_rad': 0.5934, # 34.0 deg
+            'steering_angle_rate_limit_rad_s': 0.1400 # TBD - Using Golf Cart value as placeholder
+        }
+    ]
+
+    if not vehicle_params_list:
+        vehicle_params_path = os.path.join(car_ws_path, 'config', 'vehicle_params.yaml')
+        vehicle_params = yaml.safe_load(open(vehicle_params_path, 'r'))
+        vehicle_params_list.append(vehicle_params)
+
     # Set the noisy odometry parameters
     noisy_odom_params = [{'enable_x': False, 'enable_y': False, 'enable_heading': False, 'enable_speed': False, 'x_stddev': 0.0625, 'y_stddev': 0.0625, 'speed_stddev': 0.06, 'heading_stddev': 0.0174},
                          {'enable_x': False, 'enable_y': False, 'enable_heading': False, 'enable_speed': False, 'x_stddev': 0.0625, 'y_stddev': 0.0625, 'speed_stddev': 0.06, 'heading_stddev': 0.0349},
@@ -300,6 +335,6 @@ if __name__ == '__main__':
     run_params = [{'which_mpc': ['uniform', 'fsmpc']},
                   {'which_mpc': ['uniform', 'fsmpc']},
                   {'which_mpc': ['uniform', 'fsmpc']}]
-    run_and_gather_results = RunandGatherResults(config_file, car_ws_path, datasets_path, noisy_odom_params, dataset_class_params, run_params)
+    run_and_gather_results = RunandGatherResults(config_file, car_ws_path, datasets_path, noisy_odom_params, dataset_class_params, run_params, vehicle_params_list)
     run_and_gather_results.run_simulation()
     logging.info("Results Gathering is Done!")

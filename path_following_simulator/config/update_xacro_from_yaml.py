@@ -113,7 +113,7 @@ def update_suspension_wheel_xacro(xacro_path, params):
     print("Updated {}: wheelbase={}, steer_limit={}, servo_rate={}".format(
         os.path.basename(xacro_path), wheelbase, steer_limit, steer_rate))
 
-def main():
+def main(params=None):
     # Get script directory
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -130,8 +130,10 @@ def main():
     suspension_wheel_xacro = os.path.join(rbcar_description_dir, 'urdf', 'wheels', 'suspension_wheel.urdf.xacro')
 
     # Read vehicle parameters
-    print("Reading vehicle parameters from: {}".format(yaml_path))
-    params = read_vehicle_params(yaml_path)
+    if params is None:
+        print("Reading vehicle parameters from: {}".format(yaml_path))
+        params = read_vehicle_params(yaml_path)
+    
     print("Parameters: wheelbase={}, weight={}, steering_limit={}, steering_rate={}".format(
         params['wheelbase'], params['weight'],
         params['steering_angle_limit_rad'], params['steering_angle_rate_limit_rad_s']))
