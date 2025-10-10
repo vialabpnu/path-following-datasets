@@ -78,49 +78,44 @@ tmux.kill_session()                     # Cleanup
 
 ---
 
-### Phase 3: Refactored Experiment Controller ✅
+### Phase 3: Updated RunandGatherResults.py ✅
 
-#### Created `MPCSimulationRunner/scripts/RunandGatherResults_refactored.py`
+#### Enhanced `MPCSimulationRunner/scripts/RunandGatherResults.py`
 **Purpose:** Master controller for running multiple experiments with different parameters
 
 **Key Improvements:**
-- **Experiment Configuration System:** Define experiments in structured dictionaries
-- **TmuxManager Integration:** Clean process management
-- **Environment Parameter Support:** Road conditions per experiment
-- **Modular Design:** Separate methods for setup, execution, cleanup
+- **Environment Parameter Support:** NEW optional parameter for road conditions per vehicle
+- **Backward Compatible:** Works with or without environment parameters
+- **Automatic Script Detection:** Uses new `update_simulation_from_yaml.py` if available, falls back to old one
+- **Smart Defaults:** If no environment params specified, uses current settings
 
-**Example Experiment Config:**
+**Example Usage:**
 ```python
-{
-    'name': 'wet_road_golfcart',
-    'vehicle_params': {
-        'wheelbase': 2.48,
-        'weight': 600,
-        # ... other params
-    },
-    'environment': {
-        'road_condition': 'wet',  # icy/wet/dry
-        'wind_speed': 0.0
-    },
-    'datasets': {
-        'enable_easy': True,
-        'enable_moderate': False,
-        'enable_hard': False
-    },
-    'mpc_types': ['nonuni_sparse_var'],
-    'noise_params': {
-        'enable_x': False,
-        # ... odometry noise settings
-    }
-}
+vehicle_params_list = [
+    {'wheelbase': 2.48, 'weight': 600, ...},  # Golf cart
+    {'wheelbase': 2.84, 'weight': 1700, ...}, # Sedan
+]
+
+environment_params_list = [
+    {'road_condition': 'dry', 'wind_speed': 0.0},   # Golf cart on dry road
+    {'road_condition': 'wet', 'wind_speed': 0.0},   # Sedan on wet road
+]
+
+run_and_gather_results = RunandGatherResults(
+    config_file, car_ws_path, datasets_path,
+    noisy_odom_params, dataset_class_params, run_params,
+    vehicle_params_list,
+    environment_params_list  # NEW parameter (optional)
+)
 ```
 
 **Workflow:**
-1. Setup experiment (update YAMLs, run update script)
-2. Launch ROS stack (TmuxManager)
-3. Execute path tests (filtered by difficulty)
-4. Collect results
-5. Cleanup (kill tmux session)
+1. For each vehicle in vehicle_params_list:
+   - Update environment_params.yaml (if environment params specified)
+   - Update vehicle_params.yaml
+   - Run update script (updates xacro + world files)
+   - Execute all test configurations
+   - Collect results
 
 ---
 
@@ -157,8 +152,7 @@ path_following_simulator/
 │   │       └── new_asphalt_friction_noobstacle.world  # Updated by script
 │   │
 │   └── MPCSimulationRunner/scripts/
-│       ├── RunandGatherResults.py            # Original (preserved)
-│       ├── RunandGatherResults_refactored.py # New experiment controller
+│       ├── RunandGatherResults.py            # Enhanced with environment support
 │       └── tmux_manager.py                   # New tmux interface
 │
 └── runSimulator.sh                          # Updated to use new script
@@ -181,15 +175,16 @@ python config/update_simulation_from_yaml.py --road-condition wet
 
 **Option 2: Automated (for multiple experiments)**
 ```bash
-# Edit RunandGatherResults_refactored.py to define experiments
-# Then run:
-python src/MPCSimulationRunner/scripts/RunandGatherResults_refactored.py
+# Edit RunandGatherResults.py to define environment_params_list
+# Example in the file shows how to set different road conditions per vehicle
+python src/MPCSimulationRunner/scripts/RunandGatherResults.py
 ```
 
-**Option 3: Run specific experiments only**
+**Option 3: Disable environment updates**
 ```bash
-python src/MPCSimulationRunner/scripts/RunandGatherResults_refactored.py \
-    --experiments wet_road_golfcart icy_road_golfcart
+# In RunandGatherResults.py, set:
+environment_params_list = None
+# This keeps existing behavior (no environment changes)
 ```
 
 ### Testing Environment Parameters
@@ -247,14 +242,34 @@ python config/update_simulation_from_yaml.py
 
 The new script is backward compatible - it does everything the old one did, plus environment updates.
 
-### For Experiment Runners
-If using `RunandGatherResults.py`:
+### For RunandGatherResults.py Users
 
-**Option 1:** Keep using the original (still works)
-**Option 2:** Migrate to `RunandGatherResults_refactored.py` for:
-- Multi-experiment support
-- Environment parameter control
-- Better process management
+**No Migration Needed!** The updated `RunandGatherResults.py` is backward compatible.
+
+**Old way (still works):**
+```python
+run_and_gather_results = RunandGatherResults(
+    config_file, car_ws_path, datasets_path,
+    noisy_odom_params, dataset_class_params, run_params,
+    vehicle_params_list
+    # No environment_params_list - uses defaults
+)
+```
+
+**New way (with environment control):**
+```python
+environment_params_list = [
+    {'road_condition': 'dry'},
+    {'road_condition': 'wet'}
+]
+
+run_and_gather_results = RunandGatherResults(
+    config_file, car_ws_path, datasets_path,
+    noisy_odom_params, dataset_class_params, run_params,
+    vehicle_params_list,
+    environment_params_list  # NEW optional parameter
+)
+```
 
 ---
 
