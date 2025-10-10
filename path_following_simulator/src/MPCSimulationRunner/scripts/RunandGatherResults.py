@@ -10,12 +10,18 @@ import yaml
 
 from typing import Dict, List, Any
 
-# Add the path to the update_xacro_from_yaml script to the system path
+# Add the path to the update scripts to the system path
 script_dir = os.path.dirname(os.path.abspath(__file__))
 config_path = os.path.join(script_dir, '..', '..', '..', 'config')
 sys.path.append(config_path)
 
-import update_xacro_from_yaml
+# Try to import new unified script, fall back to old one if not available
+try:
+    import update_simulation_from_yaml as update_script
+    USING_NEW_UPDATER = True
+except ImportError:
+    import update_xacro_from_yaml as update_script
+    USING_NEW_UPDATER = False
 
 def shutdown_sim(process_list, gracetime_s=0.1):
     """Shuts down a list of processes gracefully."""
@@ -43,7 +49,7 @@ def shutdown_sim(process_list, gracetime_s=0.1):
 
 
 class RunandGatherResults:
-    def __init__(self, config_file: str, current_workspace_dir: str, current_dataset_dir: str, noisy_odom_params: Dict[str, Any], dataset_class_params: Dict[str, Any], run_params: Dict[str, Any], vehicle_params_list: List[Dict[str, Any]]) -> None:
+    def __init__(self, config_file: str, current_workspace_dir: str, current_dataset_dir: str, noisy_odom_params: Dict[str, Any], dataset_class_params: Dict[str, Any], run_params: Dict[str, Any], vehicle_params_list: List[Dict[str, Any]], environment_params_list: List[Dict[str, Any]] = None) -> None:
         self.run_command = config_file['run_command']
         self.run_command_mpc_server = self.run_command['mpc_server']
         self.run_command_mpc_node = self.run_command['mpc_node']
@@ -69,6 +75,14 @@ class RunandGatherResults:
         self.process_list = []
         self.gazebo_reset_command = "rosservice call /gazebo/reset_simulation {}"
         self.vehicle_params_list = vehicle_params_list
+
+        # Environment parameters (optional - for road friction, wind, etc.)
+        if environment_params_list:
+            self.environment_params_list = environment_params_list
+        else:
+            # Default: no environment changes (use current settings)
+            self.environment_params_list = [None] * len(vehicle_params_list)
+
         if not noisy_odom_params:
             # Default: all noise disabled, stddevs can be set to 0 or any default
             self.noisy_odom_params = [{
@@ -119,14 +133,41 @@ class RunandGatherResults:
         self.logger.info(f"Evaluation results path target: {self.eval_results_path_target}")
 
     def run_simulation(self):
-        for vehicle_params in self.vehicle_params_list:
+        for idx, vehicle_params in enumerate(self.vehicle_params_list):
+            # Update environment parameters if specified
+            environment_params = self.environment_params_list[idx] if idx < len(self.environment_params_list) else None
+
+            if environment_params and USING_NEW_UPDATER:
+                self.logger.info(f"Updating environment parameters: {environment_params}")
+                environment_params_path = os.path.join(self.current_workspace_dir, 'config', 'environment_params.yaml')
+
+                # Read existing environment params
+                if os.path.exists(environment_params_path):
+                    with open(environment_params_path, 'r') as f:
+                        env_config = yaml.safe_load(f)
+
+                    # Update with new values
+                    if 'road_condition' in environment_params:
+                        env_config['active_road_condition'] = environment_params['road_condition']
+                        self.logger.info(f"Setting road condition: {environment_params['road_condition']}")
+
+                    if 'wind_speed' in environment_params:
+                        env_config['wind']['mean_speed_mps'] = environment_params['wind_speed']
+                        self.logger.info(f"Setting wind speed: {environment_params['wind_speed']} m/s")
+
+                    # Write updated environment params
+                    with open(environment_params_path, 'w') as f:
+                        yaml.dump(env_config, f)
+
+            # Update vehicle parameters
             self.logger.info(f"Updating vehicle parameters: {vehicle_params}")
             vehicle_params_path = os.path.join(self.current_workspace_dir, 'config', 'vehicle_params.yaml')
             with open(vehicle_params_path, 'w') as f:
                 yaml.dump(vehicle_params, f)
 
-            self.logger.info("Updating xacro files...")
-            update_xacro_from_yaml.main()
+            # Run update script (updates xacro files and/or world file based on which script is available)
+            self.logger.info("Updating simulation files from YAML...")
+            update_script.main()
 
             for noise_param, dataset_param, run_param in zip(self.noisy_odom_params, self.dataset_class_params, self.run_params):
                 # --- START: NEW PATH FILTERING LOGIC ---
@@ -316,7 +357,7 @@ if __name__ == '__main__':
             'width': 1.86,
             'height': 0.2, # Using default value
             'steering_angle_limit_rad': 0.5934, # 34.0 deg
-            'steering_angle_rate_limit_rad_s': 0.1400 # TBD - Using Golf Cart value as placeholder
+            'steering_angle_rate_limit_rad_s': 0.3840 # 22.0 deg/s
         }
     ]
 
@@ -324,6 +365,16 @@ if __name__ == '__main__':
         vehicle_params_path = os.path.join(car_ws_path, 'config', 'vehicle_params.yaml')
         vehicle_params = yaml.safe_load(open(vehicle_params_path, 'r'))
         vehicle_params_list.append(vehicle_params)
+
+    # Environment parameters (optional - for testing different road conditions)
+    # Set to None or empty list to skip environment parameter updates
+    # Example: Test different friction levels for each vehicle
+    environment_params_list = [
+        {'road_condition': 'dry', 'wind_speed': 0.0},    # Golf cart on dry road
+        {'road_condition': 'wet', 'wind_speed': 0.0},    # Sedan on wet road
+    ]
+    # To disable environment parameter updates, set to None:
+    # environment_params_list = None
 
     # Set the noisy odometry parameters
     noisy_odom_params = [{'enable_x': False, 'enable_y': False, 'enable_heading': False, 'enable_speed': False, 'x_stddev': 0.0625, 'y_stddev': 0.0625, 'speed_stddev': 0.06, 'heading_stddev': 0.0174},
@@ -335,6 +386,17 @@ if __name__ == '__main__':
     run_params = [{'which_mpc': ['uniform', 'fsmpc']},
                   {'which_mpc': ['uniform', 'fsmpc']},
                   {'which_mpc': ['uniform', 'fsmpc']}]
-    run_and_gather_results = RunandGatherResults(config_file, car_ws_path, datasets_path, noisy_odom_params, dataset_class_params, run_params, vehicle_params_list)
+
+    # Create and run the experiment
+    run_and_gather_results = RunandGatherResults(
+        config_file,
+        car_ws_path,
+        datasets_path,
+        noisy_odom_params,
+        dataset_class_params,
+        run_params,
+        vehicle_params_list,
+        environment_params_list  # NEW: Environment parameters for road friction, wind, etc.
+    )
     run_and_gather_results.run_simulation()
     logging.info("Results Gathering is Done!")
