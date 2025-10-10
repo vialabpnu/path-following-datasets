@@ -39,11 +39,11 @@ jobs:
 
       - name: Smoke test the container with supervisord
         run: |
-          echo "Starting container for a 30-second smoke test..."
+          echo "Starting container for a 1 minute smoke test..."
 
           # We wrap the command in an if/else structure to control the flow.
           # This works correctly with GitHub's "fail-fast" mode.
-          if timeout 30s docker run --rm --user root path-following-env:latest \
+          if timeout 60s docker run --rm --user root path-following-env:latest \
             /usr/bin/supervisord -c /etc/supervisor/supervisord.conf; then
             
             # This block only runs if the exit code was 0 (the container finished early)

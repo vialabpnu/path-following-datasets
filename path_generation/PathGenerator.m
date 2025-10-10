@@ -4,7 +4,7 @@ clf; close all; clear all;
 % Get the path to the current script
 scriptDir = fileparts(mfilename('fullpath'));
 projectRoot = fileparts(scriptDir);
-yamlFile = fullfile(projectRoot, 'vehicle_params.yaml');
+yamlFile = fullfile(projectRoot, 'path_following_simulator/config/vehicle_params.yaml');
 vehicle_params = readyaml(yamlFile);
 
 % Check if a configuration file exists (.mat file)
@@ -73,7 +73,7 @@ else
     generator.saving_path_folder = difficulty_folder_path;
 
     % Dump vehicle_params.yaml and generation_config.yaml into the <datetime> folder
-    copyfile(fullfile(scriptDir, '../vehicle_params.yaml'), fullfile(datetime_folder, 'vehicle_params.yaml'));
+    copyfile(fullfile(scriptDir, '../path_following_simulator/config/vehicle_params.yaml'), fullfile(datetime_folder, 'vehicle_params.yaml'));
     copyfile(fullfile(scriptDir, 'generation_config.yaml'), fullfile(datetime_folder, 'generation_config.yaml'));
 end
 

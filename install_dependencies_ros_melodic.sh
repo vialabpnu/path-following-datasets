@@ -64,7 +64,7 @@ echo "source /opt/ros/melodic/setup.bash" >> ~/.bashrc
 pip2 install -r py2_requirements_ros_melodic.txt
 
 # Create conda environment based on the provided environment.yml file
-conda env create -f mpc_environment.yml
+conda env create -f mpc_dependencies.yml
 
 # Check if the conda for mpc is created successfully
 if conda env list | grep -q mpc-gen; then

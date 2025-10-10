@@ -4,17 +4,17 @@
 ![python](https://img.shields.io/badge/Python-2.7-blue?style=plastic&logo=python)
 ![ROS2](https://img.shields.io/badge/ROS-Melodic-white?style=plastic&logo=ros)
 
-This repository contains a dataset for control algorithm benchmarking in unstructured environments, specifically targeting scenarios like parking lots where precise low-speed maneuvering is crucial. This dataset, based on detailed 2D HD maps from two distinct areas at Pusan National University (PNU), was created to address the need for specialized data to evaluate the performance of control algorithms for autonomous vehicles and robots navigating in such complex, real-world scenarios.
+This repository contains a dataset for control algorithm benchmarking in unstructured roads, specifically targeting scenarios like parking lots where precise low-speed maneuvering is crucial. This dataset, based on detailed 2D HD maps from two distinct areas at Pusan National University (PNU), was created to address the need for specialized data to evaluate the performance of control algorithms for autonomous vehicles and robots navigating in such complex, real-world scenarios.
 
 ## Background
 
-While there are existing datasets for autonomous driving, they often focus on structured environments like highways and urban roads. These datasets are valuable for high-speed navigation and scenarios with well-defined lanes and traffic rules. However, they do not adequately capture the unique challenges of Unstructured environments like parking lots, where:
+While there are existing datasets for autonomous driving, they often focus on structured environments like highways and urban roads. These datasets are valuable for high-speed navigation and scenarios with well-defined lanes and traffic rules. However, they do not adequately capture the unique challenges of unstructured roads like parking lots, where:
 
 * **Maneuvering is predominantly at low speeds**, requiring precise control and responsiveness to navigate tight spaces and avoid collisions.
 * **Paths are often complex and irregular**, with sharp turns, varying curvature, and obstacles that necessitate sophisticated path-following algorithms.
 * **Elevation changes can significantly impact vehicle dynamics**, demanding control algorithms that can maintain stability and trajectory accuracy on slopes.
 
-This dataset aims to fill this gap by providing a dedicated resource for evaluating and improving control algorithms specifically for Unstructured environments, enabling the development of more robust and reliable autonomous navigation systems. This data can be used for benchmarking both classical and learning-based control algorithms, facilitating the development of advanced techniques for autonomous driving in challenging scenarios. The dataset is classified into three difficulty levels, providing a diverse range of paths for comprehensive evaluation and benchmarking.
+This dataset aims to fill this gap by providing a dedicated resource for evaluating and improving control algorithms specifically for unstructured roads, enabling the development of more robust and reliable autonomous navigation systems. This data can be used for benchmarking both classical and learning-based control algorithms, facilitating the development of advanced techniques for autonomous driving in challenging scenarios. The dataset is classified into three difficulty levels, providing a diverse range of paths for comprehensive evaluation and benchmarking.
 
 
 ## Dataset Description
@@ -27,8 +27,8 @@ This dataset includes:
 **Example use cases:**
 
 *   **Control algorithm benchmarking:** Comparing the performance of different control algorithms (e.g., PID, MPC, pure pursuit) in tracking the generated paths, analyzing their ability to handle varying curvature and difficulty levels.
-*   **Unstructured environment navigation:** This data can be used for evaluating the performance of autonomous driving systems in navigating complex, unstructured environments like parking lots.
-*   **Developing learning-based control algorithms:** Training and evaluating reinforcement learning agents or other learning-based controllers to navigate in unstructured environments.
+*   **Unstructured road navigation:** This data can be used for evaluating the performance of autonomous driving systems in navigating complex, unstructured roads like parking lots.
+*   **Developing learning-based control algorithms:** Training and evaluating reinforcement learning agents or other learning-based controllers to navigate in unstructured roads.
 *   **Testing path-following algorithms in the presence of disturbances:** Evaluating the robustness of control algorithms to disturbances like wind, tire slip, or sensor noise.
 *   **Analyzing the impact of different vehicle parameters on control performance:** Studying how factors like vehicle dimensions, mass, and tire characteristics affect path-following accuracy.
 
@@ -96,17 +96,16 @@ cd path-following-datasets
 ./install_dependencies_ros_melodic.sh
 
 # Navigate to the examples directory
-cd examples/car_ws
+cd path_following_simulator
 
 # Build the Workspace
 catkin build
 
 # Run the simulator
-cd ..
 ./runSimulator.sh
 ```
 
-* After running these commands, the simulation saves its logs to the ```examples/car_ws/src/MPCSimulationRunner/data/eval_test``` directory.
+* After running these commands, the simulation saves its logs to the ```path_following_simulator/src/MPCSimulationRunner/data/eval_test``` directory.
 
 ## Running with Docker
 
@@ -127,7 +126,7 @@ Once inside the container, you can run the simulator:
 
 ```bash
 cd path-following-datasets
-./examples/runSimulator.sh
+./path_following_simulator/runSimulator.sh
 ```
 
 ## Generating Custom Paths and Difficulty Classification
@@ -135,7 +134,7 @@ cd path-following-datasets
 To generate your own paths and classify their difficulty based on different vehicle parameters or vehicle models:
 
 - **Edit Configuration Files:**  
-  Adjust the settings in both `path_generation/generation_config.yaml` and `vehicle_params.yaml` to match your desired vehicle model, parameters, or path generation preferences.
+  Adjust the settings in both `path_generation/generation_config.yaml` and `path_following_simulator/config/vehicle_params.yaml` to match your desired vehicle model, parameters, or path generation preferences.
 
 - **Generate Paths in MATLAB:**  
   Open MATLAB and run `PathGenerator.m`  
@@ -159,7 +158,7 @@ If you use this dataset in your research, please cite the following paper:
   number={XX},
   pages={XX--XX},
   doi={10.XXXX/XXXX.2025.XXXXXXX},  % Add actual DOI if available
-  url={https://github.com/vialabpnu/path-following-datasets},  % Add repo URL
+  url={},  % Add paper URL
   note={Dataset available at: \url{https://github.com/vialabpnu/path-following-datasets}}
 } -->
 

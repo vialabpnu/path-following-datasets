@@ -79,18 +79,18 @@ USER $USER
 WORKDIR /home/$USER
 
 # Clone the repository which contains all necessary config files
-RUN git clone https://github.com/vialabpnu/path-following-datasets.git /home/$USER/path-following-datasets
+RUN git clone --branch dev https://github.com/vialabpnu/path-following-datasets.git /home/ubuntu/path-following-datasets
 
 # --- FIX START ---
 # Move files from the cloned repository to their required locations
 # User-level files go into the home directory
-RUN cp /home/$USER/path-following-datasets/py2_requirements_ros_melodic.txt /home/$USER/ && \
-    cp /home/$USER/path-following-datasets/mpc_environment.yml /home/$USER/ && \
-    cp /home/$USER/path-following-datasets/install_dependencies_ros_melodic.sh /home/$USER/
+RUN cp /home/ubuntu/path-following-datasets/py2_requirements_ros_melodic.txt /home/ubuntu/ && \
+    cp /home/ubuntu/path-following-datasets/mpc_dependencies.yml /home/ubuntu/ && \
+    cp /home/ubuntu/path-following-datasets/install_dependencies_ros_melodic.sh /home/ubuntu/
 
 # Switch to root to place system-level config files
 USER root
-RUN cp /home/$USER/path-following-datasets/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+RUN cp /home/ubuntu/path-following-datasets/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 # Switch back to the non-root user
 USER $USER
 # --- FIX END ---
@@ -104,18 +104,18 @@ RUN python2 -c "from backports.functools_lru_cache import lru_cache"
 
 # Install Miniconda
 RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh && \
-    bash miniconda.sh -b -p /home/$USER/miniconda && \
+    bash miniconda.sh -b -p /home/ubuntu/miniconda && \
     rm miniconda.sh
 
 # Add conda to PATH
-ENV PATH="/home/$USER/miniconda/bin:$PATH"
+ENV PATH="/home/ubuntu/miniconda/bin:$PATH"
 
 # Accept Conda Terms of Service for required channels
 RUN conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main && \
     conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
 
 # Create conda environment
-RUN conda env create -f mpc_environment.yml
+RUN conda env create -f mpc_dependencies.yml
 
 # Initialize rosdep as root
 USER root
@@ -124,19 +124,19 @@ RUN rosdep init || true && \
 USER $USER
 
 # Run the dependency installation script
-RUN chmod +x /home/$USER/install_dependencies_ros_melodic.sh && \
-    /bin/bash -c "source /opt/ros/melodic/setup.bash && /home/$USER/install_dependencies_ros_melodic.sh"
+RUN chmod +x /home/ubuntu/install_dependencies_ros_melodic.sh && \
+    /bin/bash -c "source /opt/ros/melodic/setup.bash && /home/ubuntu/install_dependencies_ros_melodic.sh"
 
 # Activate conda environment for all subsequent commands
 SHELL ["conda", "run", "-n", "mpc-gen", "/bin/bash", "-c"]
 
 # Build the catkin workspace
 RUN source /opt/ros/melodic/setup.bash && \
-    cd /home/ubuntu/path-following-datasets/examples/car_ws && \
+    cd /home/ubuntu/path-following-datasets/path_following_simulator && \
     catkin build
 
 # Set the final container entrypoint
-ENTRYPOINT ["/bin/bash", "-c", "source /home/ubuntu/miniconda/etc/profile.d/conda.sh && conda activate mpc-gen && source /opt/ros/melodic/setup.bash && source /home/ubuntu/path-following-datasets/examples/car_ws/devel/setup.bash && exec \"$@\"", "bash"]
+ENTRYPOINT ["/bin/bash", "-c", "source /home/ubuntu/miniconda/etc/profile.d/conda.sh && conda activate mpc-gen && source /opt/ros/melodic/setup.bash && source /home/ubuntu/path-following-datasets/path_following_simulator/devel/setup.bash && exec \"$@\"", "bash"]
 
 # Default command to run
 CMD ["/bin/bash"]
