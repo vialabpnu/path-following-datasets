@@ -37,7 +37,7 @@ def get_car_ws_path_and_parent_folder():
     # Navigate up to car_ws
     car_ws_path = os.path.abspath(os.path.join(src_dir, '..'))
     # Navigate up to path_following_datasets main directory
-    parent_path = os.path.abspath(os.path.join(car_ws_path, '..', '..'))
+    parent_path = os.path.abspath(os.path.join(car_ws_path, '..'))
     print("Car WS Path: " + car_ws_path)
     print("Parent Path: " + parent_path)
     return car_ws_path, parent_path
