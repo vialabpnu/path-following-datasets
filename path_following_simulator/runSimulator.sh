@@ -15,6 +15,15 @@ sleep 1
 
 tmux new-session -d -s 'simrun'  # Added closing quote
 
+# Update xacro files from vehicle_params.yaml before starting simulation
+echo "Updating xacro files from vehicle_params.yaml..."
+python "$CAR_WS_PATH/config/update_xacro_from_yaml.py"
+if [ $? -eq 0 ]; then
+    echo "Xacro files updated successfully"
+else
+    echo "Warning: Failed to update xacro files"
+fi
+
 tmux rename-window 'Simulator Running Example'
 tmux set -g mouse on
 

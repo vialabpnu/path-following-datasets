@@ -62,11 +62,50 @@ class NoisyOdomNode:
 
         if self.enable_speed:
             noisy_msg.twist.twist.linear.x += np.random.normal(0, self.speed_stddev)
-            noisy_msg.twist.twist.linear.y += np.random.normal(0, self.speed_stddev)
+#            noisy_msg.twist.twist.linear.y += np.random.normal(0, self.speed_stddev)
 
         # Covariances (optional: you can set these to reflect the noise)
-        noisy_msg.pose.covariance = msg.pose.covariance
-        noisy_msg.twist.covariance = msg.twist.covariance
+        # noisy_msg.pose.covariance = msg.pose.covariance
+        # noisy_msg.twist.covariance = msg.twist.covariance
+
+        # ----------------------------------------------------
+        # 4. Covariance Update (The failure point)
+        # ----------------------------------------------------
+
+        # Pose Covariance: Use the original (working) tuple directly
+        original_pose_cov = msg.pose.covariance
+        pose_cov_list = list(original_pose_cov)
+
+        if self.enable_x:
+            # X position variance (Index 0)
+            pose_cov_list[0] += self.x_stddev**2
+
+        if self.enable_y:
+            # Y position variance (Index 7)
+            pose_cov_list[7] += self.y_stddev**2
+
+        if self.enable_heading:
+            # Yaw (Heading) variance (Index 35)
+            pose_cov_list[35] += self.heading_stddev**2
+
+        # Assign the new tuple (The working method)
+        noisy_msg.pose.covariance = tuple(pose_cov_list)
+
+        # Twist Covariance: The standard (but failing) method, as it's the only way to change a tuple
+        if self.enable_speed:
+            # A. Convert original tuple to a mutable list
+            twist_cov_list = list(msg.twist.covariance)
+
+            # B. Modify the required index (Linear X variance is at index 0)
+            twist_cov_list[0] += self.speed_stddev**2
+
+            # C. Reassign the field with a NEW tuple object
+            noisy_msg.twist.covariance = tuple(twist_cov_list)
+        else:
+            # If not enabled, assign the original (working) tuple
+            noisy_msg.twist.covariance = msg.twist.covariance
+
+        # ----------------------------------------------------
 
         self.pub.publish(noisy_msg)
 

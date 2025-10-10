@@ -25,6 +25,7 @@
 
   <!-- Degree-to-radian conversions -->
   <xacro:property name="degrees_45" value="0.785398163"/>
+  <xacro:property name="steer_limit" value="0.444"/>
   <xacro:property name="degrees_90" value="1.57079633"/>
   <xacro:property name="degrees_180" value="3.14159265"/>
 
@@ -52,7 +53,7 @@
   <!-- Servo_stall_torque of the direction axis in Nm. servo_no_load_speed is
        measured in rad/s. -->
   <xacro:property name="servo_stall_torque" value="50"/>  <!-- check -->
-  <xacro:property name="servo_no_load_speed" value="25"/> <!-- check -->
+  <xacro:property name="servo_no_load_speed" value="0.14"/> <!-- check -->
 
   <!-- Inertia of a thick-walled cylindrical tube with open ends. Height is
        measured along the z axis, which is the tube's axis. inner_rad and
@@ -218,7 +219,7 @@
       <parent link="${lr_prefix}_steering_link"/>
       <child link="${lr_prefix}_${fr_prefix}_axle_carrier"/>
       <axis xyz="0 0 1"/>
-      <limit lower="${-degrees_45}" upper="${degrees_45}"
+      <limit lower="-${steer_limit}" upper="${steer_limit}"
              effort="${servo_stall_torque}" velocity="${servo_no_load_speed}"/>
     </joint>
     <transmission name="${lr_prefix}_steering_trans">

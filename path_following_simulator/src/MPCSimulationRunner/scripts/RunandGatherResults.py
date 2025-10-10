@@ -36,8 +36,7 @@ def shutdown_sim(process_list, gracetime_s=0.1):
 
 
 class RunandGatherResults:
-    def __init__(self, config_file: str, current_workspace_dir: str, current_dataset_dir: str, noisy_odom_params: Dict[str, Any]) -> None:
-        self.mpc_sampling_params = ['fsmpc', 'uniform']
+    def __init__(self, config_file: str, current_workspace_dir: str, current_dataset_dir: str, noisy_odom_params: Dict[str, Any], dataset_class_params: Dict[str, Any], run_params: Dict[str, Any]) -> None:
         self.run_command = config_file['run_command']
         self.run_command_mpc_server = self.run_command['mpc_server']
         self.run_command_mpc_node = self.run_command['mpc_node']
@@ -50,7 +49,7 @@ class RunandGatherResults:
         self.user_prefix = config_file['user_prefix_path']
         self.workspace_list = config_file['workspace_list'][0]
         self.sleep_list = config_file['sleep_list']
-        self.path_files_list = self.current_dataset_dir + '/' + self.path_files 
+        self.path_files_list = self.current_dataset_dir + '/' + self.path_files
         self.path_files_list = os.listdir(self.path_files_list)
         self.path_files_list = [path_file for path_file in self.path_files_list if path_file.endswith('.csv')]
         self.count_path_files = len(self.path_files_list)
@@ -77,6 +76,22 @@ class RunandGatherResults:
         else:
             self.noisy_odom_params = noisy_odom_params
 
+        if not dataset_class_params:
+            self.dataset_class_params = [{
+                'enable_easy': True,
+                'enable_moderate': True,
+                'enable_hard': True
+            }]
+        else:
+            self.dataset_class_params = dataset_class_params
+
+        if not run_params:
+            self.run_params = [{
+                'which_mpc': ['uniform', 'fsmpc']
+            }]
+        else:
+            self.run_params = run_params
+
         if not os.path.exists(self.eval_results_path_target):
             os.mkdir(self.eval_results_path_target)
 
@@ -96,9 +111,35 @@ class RunandGatherResults:
         self.logger.info(f"Evaluation results path target: {self.eval_results_path_target}")
 
     def run_simulation(self):
-        for noise_param in self.noisy_odom_params:
+        for noise_param, dataset_param, run_param in zip(self.noisy_odom_params, self.dataset_class_params, self.run_params):
+            # --- START: NEW PATH FILTERING LOGIC ---
+            current_path_files_list = []
+
+            # 1. Filter Easy paths (starting with 'E_')
+            if dataset_param.get('enable_easy', False):
+                current_path_files_list.extend([p for p in self.path_files_list if p.startswith('E_')])
+
+            # 2. Filter Moderate paths (starting with 'M_')
+            if dataset_param.get('enable_moderate', False):
+                current_path_files_list.extend([p for p in self.path_files_list if p.startswith('M_')])
+
+            # 3. Filter Hard paths (starting with 'H_')
+            if dataset_param.get('enable_hard', False):
+                current_path_files_list.extend([p for p in self.path_files_list if p.startswith('H_')])
+
+            if not current_path_files_list:
+                self.logger.warning(f"No path files selected for dataset parameters: {dataset_param}. Skipping run.")
+                continue # Skip this run if no paths are selected
+
+            # self.logger.info(f"Selected path files for this run: {current_path_files_list}")
+            # --- END: NEW PATH FILTERING LOGIC ---
+
             noisy_odom_cmd = self.build_rosrun_cmd(noise_param)
             self.logger.info(f"Running noisy odometry node with command: {noisy_odom_cmd}")
+
+            # 1. 딕셔너리(run_param)에서 'which_mpc' 키의 값(리스트)을 가져옵니다.
+            mpc_type_list = run_param.get('which_mpc', [])
+
             # Start the noisy odom node as a subprocess
             noisy_proc = subprocess.Popen(noisy_odom_cmd, shell=True, executable="/bin/bash")
             # Create a folder based on the evaluation results path target and count of the noisy odom params
@@ -107,10 +148,11 @@ class RunandGatherResults:
             if not os.path.exists(self.eval_results_path_target_run):
                 os.mkdir(self.eval_results_path_target_run)
 
-            for i, path_file in enumerate(self.path_files_list):
+
+            for i, path_file in enumerate(current_path_files_list):
                 self.logger.info(f"Running the simulation for path file: {path_file}")
 
-                for sampling_param in self.mpc_sampling_params:
+                for sampling_param in mpc_type_list:
                     self.process_list = []
                     run_command_dict = {
                         'mpc_node': self.run_command_mpc_node,
@@ -131,7 +173,7 @@ class RunandGatherResults:
                                     f"sleep {self.sleep_list[idx]}",
                                     str(value) + ' --eval_mode True' + ' --file_path_name ' + path_file + ' --file_path_dir ' + self.eval_results_path_target_run \
                                     + ' --horizon_type ' + sampling_param
-                                    ] 
+                                    ]
                         elif key == 'motion_planner':
                             command = ["cd ",
                                     f"source {self.current_workspace_dir}" + "/devel/setup.bash",
@@ -164,7 +206,7 @@ class RunandGatherResults:
                             subprocess.run(what_to_kill_in_ros, shell=True)
                             subprocess.run(what_to_kill_in_ros_mpc_node, shell=True)
                             time.sleep(1)
-                            break 
+                            break
                     else:
                         with open(os.path.join(self.eval_results_path, 'timeout.txt'), 'w') as f:
                             f.write('Timeout has occurred!')
@@ -192,7 +234,7 @@ class RunandGatherResults:
                         self.logger.info("Finished moving the results to the evaluation folder")
                 self.logger.info("Finished running the results gathering!")
             self.logger.info("Finished running the simulation!")
-                    
+
              # Terminate the noisy odom node after the simulation
             self.logger.info("Terminating noisy odometry node.")
             noisy_proc.terminate()
@@ -230,16 +272,34 @@ if __name__ == '__main__':
     # Convert the path to a string
     car_ws_path = str(car_ws_path)
     datasets_path = str(datasets_path)
-    default_path = os.path.join(car_ws_path, 'config/config_run_gather.yaml')
+
+    # Update xacro files from vehicle_params.yaml before starting simulations
+    print("Updating xacro files from vehicle_params.yaml...")
+    xacro_update_script = os.path.join(car_ws_path, 'config', 'update_xacro_from_yaml.py')
+    try:
+        result = subprocess.run(['python', xacro_update_script], capture_output=True, text=True)
+        if result.returncode == 0:
+            print("Xacro files updated successfully")
+            print(result.stdout)
+        else:
+            print("Warning: Failed to update xacro files")
+            print(result.stderr)
+    except Exception as e:
+        print(f"Warning: Could not run xacro update script: {e}")
+    default_path = os.path.join(car_ws_path, 'src/MPCSimulationRunner/config/config_run_gather.yaml')
     parser.add_argument('--config_file', type=str, default=default_path, help='Path to the configuration file', required=False)
     config_file_path = parser.parse_args().config_file
     config_file = yaml.safe_load(open(config_file_path, 'r'))
     # Set the noisy odometry parameters
-    # Test the noise only on the x and y position to see the effect on the performance
-    noisy_odom_params = [{'enable_x': True, 'enable_y': True, 'enable_heading': False, 'enable_speed': False, 'x_stddev': 0.01, 'y_stddev': 0.01},
-                         {'enable_x': True, 'enable_y': True, 'enable_heading': False, 'enable_speed': False, 'x_stddev': 0.05, 'y_stddev': 0.05},
-                         {'enable_x': True, 'enable_y': True, 'enable_heading': False, 'enable_speed': False, 'x_stddev': 0.25, 'y_stddev': 0.25}]
-    run_and_gather_results = RunandGatherResults(config_file, car_ws_path, datasets_path, noisy_odom_params)
+    noisy_odom_params = [{'enable_x': False, 'enable_y': False, 'enable_heading': False, 'enable_speed': False, 'x_stddev': 0.0625, 'y_stddev': 0.0625, 'speed_stddev': 0.06, 'heading_stddev': 0.0174},
+                         {'enable_x': False, 'enable_y': False, 'enable_heading': False, 'enable_speed': False, 'x_stddev': 0.0625, 'y_stddev': 0.0625, 'speed_stddev': 0.06, 'heading_stddev': 0.0349},
+                         {'enable_x': False, 'enable_y': False, 'enable_heading': False, 'enable_speed': False, 'x_stddev': 0.0625, 'y_stddev': 0.0625, 'speed_stddev': 0.06, 'heading_stddev': 0.0698}]
+    dataset_class_params = [{'enable_easy': True, 'enable_moderate': False, 'enable_hard': False},
+                            {'enable_easy': False, 'enable_moderate': True, 'enable_hard': False},
+                            {'enable_easy': False, 'enable_moderate': False, 'enable_hard': True}]
+    run_params = [{'which_mpc': ['uniform', 'fsmpc']},
+                  {'which_mpc': ['uniform', 'fsmpc']},
+                  {'which_mpc': ['uniform', 'fsmpc']}]
+    run_and_gather_results = RunandGatherResults(config_file, car_ws_path, datasets_path, noisy_odom_params, dataset_class_params, run_params)
     run_and_gather_results.run_simulation()
     logging.info("Results Gathering is Done!")
-    
