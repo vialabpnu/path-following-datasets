@@ -12,7 +12,7 @@ import rospy
 import tf
 
 from ackermann_msgs.msg import AckermannDriveStamped
-from motion_planner.msg import Local_path
+from motion_planner.msg import LocalPath
 from helper import GazeboSimHelper
 from std_msgs.msg import Bool
 from nav_msgs.msg import Odometry
@@ -352,7 +352,7 @@ def main():
     sub = rospy.Subscriber("/INS/odom", Odometry, control_loop_cb, queue_size=1)
 
     if use_motion_planner:
-        sub_path = rospy.Subscriber("/path_motion_planner", Local_path, get_path_from_motion_planner, queue_size=1)
+        sub_path = rospy.Subscriber("/path_motion_planner", LocalPath, get_path_from_motion_planner, queue_size=1)
         sub_goal = rospy.Subscriber("/path_motion_planner/goal_reached", Bool, get_goal_from_mp_cb, queue_size=1)
     else:
         # get_path_from_file()
