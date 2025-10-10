@@ -508,7 +508,7 @@ class MotionPlannerNode:
                     ref_v.data = [0.0] * len(self.path.x)
                     curv = State()
                     curv.data = [0.0] * len(self.path.x)
-                    ref_path = LocalPath()
+ref_path = LocalPath()
                     ref_path.header.stamp = rospy.Time.now()
                     ref_path.ref_state.append(ref_x)
                     ref_path.ref_state.append(ref_y)

@@ -1,4 +1,6 @@
 #!/usr/bin/env python2.7
+import rospy
+rospy.logwarn("THIS IS THE LATEST VERSION OF THE CODE")
 import argparse
 import socket
 import atexit
