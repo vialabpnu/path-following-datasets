@@ -15,7 +15,7 @@
   <xacro:if value="${publish_bf}">
     <link name="base_footprint">
       <visual>
-          <origin xyz="1.24 0 0" rpy="0 0 0" />
+          <origin xyz="${wheelbase/2} 0 0" rpy="0 0 0" />
           <geometry>
              <box size="0.001 0.001 0.001" />
           </geometry>
@@ -31,10 +31,10 @@
     </link>
 
     <joint name="base_footprint_joint" type="fixed">
-      <origin xyz="1.24 0 ${clearance}" rpy="0 0 0" />  <!-- height is the clearance -->
+      <origin xyz="${wheelbase/2} 0 ${clearance}" rpy="0 0 0" />  <!-- height is the clearance -->
       <parent link="base_footprint"/>
       <child link="base_link" />
-    </joint>    
+    </joint>
   </xacro:if>
 
   <!-- BASE_LINK -->

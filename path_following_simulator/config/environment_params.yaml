@@ -2,30 +2,22 @@
 # These parameters control the simulation environment conditions
 
 # Road surface friction coefficients
+# mu: Longitudinal friction coefficient (forward/backward rolling direction - acceleration/braking)
+# mu2: Lateral friction coefficient (sideways/cornering direction - steering/sliding)
 # These values affect tire-ground contact in the Gazebo world file
-road_conditions:
-  icy:
-    mu: 0.1      # Longitudinal friction coefficient
-    mu2: 0.1     # Lateral friction coefficient
-    description: "Icy road conditions - very low friction"
 
-  wet:
-    mu: 0.55     # Longitudinal friction coefficient
-    mu2: 0.55    # Lateral friction coefficient
-    description: "Wet asphalt - moderate friction"
+friction_mu: 0.85   # dry road (high friction, default)
+friction_mu2: 0.85  # dry road (high friction, default)
 
-  dry:
-    mu: 0.85     # Longitudinal friction coefficient
-    mu2: 0.85    # Lateral friction coefficient
-    description: "Dry asphalt - high friction (default)"
+# Available friction values for different road conditions:
+# - 0.85: dry asphalt (high friction, good grip)
+# - 0.55: wet asphalt (moderate friction, reduced grip)
+# - 0.1: icy road (very low friction, minimal grip)
 
-# Active road condition (will be updated by update_simulation_from_yaml.py)
-active_road_condition: "dry"
-
-# Wind disturbance parameters (optional, for future implementation)
+# Wind disturbance parameters
 wind:
   enabled: false
-  direction_deg: 0        # Wind direction (0=North, 90=East, 180=South, 270=West)
-  mean_speed_mps: 0.0     # Mean wind speed in meters per second
-  turbulence_intensity: 0.1  # Turbulence intensity (0.0-1.0)
-  gust_frequency_hz: 0.1     # Frequency of wind gusts in Hz
+  direction_deg: 0          # Wind direction (0=North, 90=East, 180=South, 270=West)
+  mean_speed_mps: 0.0       # Mean wind speed in meters per second
+  turbulence_intensity: 0.1 # Turbulence intensity (0.0-1.0)
+  gust_frequency_hz: 0.1    # Frequency of wind gusts in Hz

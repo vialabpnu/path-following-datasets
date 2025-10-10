@@ -239,14 +239,12 @@ class RunandGatherResults:
         self.ros_stack_launched = False
 
     def run_simulation(self):
-        # Launch Gazebo and robot control if using TmuxManager (roscore runs separately in supervisord)
-        if USING_TMUX:
-            if not self.launch_ros_stack():
-                self.logger.error("Failed to launch Gazebo and robot control, aborting")
-                return
-
         try:
             for idx, vehicle_params in enumerate(self.vehicle_params_list):
+                self.logger.info("="*60)
+                self.logger.info(f"EXPERIMENT {idx+1}/{len(self.vehicle_params_list)}")
+                self.logger.info("="*60)
+
                 # Update environment parameters if specified
                 environment_params = self.environment_params_list[idx] if idx < len(self.environment_params_list) else None
 
@@ -259,10 +257,14 @@ class RunandGatherResults:
                         with open(environment_params_path, 'r') as f:
                             env_config = yaml.safe_load(f)
 
-                        # Update with new values
-                        if 'road_condition' in environment_params:
-                            env_config['active_road_condition'] = environment_params['road_condition']
-                            self.logger.info(f"Setting road condition: {environment_params['road_condition']}")
+                        # Update with new values (using direct friction values)
+                        if 'friction_mu' in environment_params:
+                            env_config['friction_mu'] = environment_params['friction_mu']
+                            self.logger.info(f"Setting friction_mu (longitudinal): {environment_params['friction_mu']}")
+
+                        if 'friction_mu2' in environment_params:
+                            env_config['friction_mu2'] = environment_params['friction_mu2']
+                            self.logger.info(f"Setting friction_mu2 (lateral): {environment_params['friction_mu2']}")
 
                         if 'wind_speed' in environment_params:
                             env_config['wind']['mean_speed_mps'] = environment_params['wind_speed']
@@ -278,9 +280,21 @@ class RunandGatherResults:
                 with open(vehicle_params_path, 'w') as f:
                     yaml.dump(vehicle_params, f)
 
-                # Run update script (updates xacro files and/or world file based on which script is available)
-                self.logger.info("Updating simulation files from YAML...")
+                # Run update script (updates xacro files and/or world file BEFORE Gazebo launches)
+                self.logger.info("Updating simulation files from YAML (xacro + world)...")
                 update_script.main()
+
+                # Launch Gazebo AFTER xacro updates (only on first iteration)
+                if idx == 0:
+                    if USING_TMUX:
+                        if not self.launch_ros_stack():
+                            self.logger.error("Failed to launch Gazebo and robot control, aborting")
+                            return
+                else:
+                    # For subsequent vehicle params: reset Gazebo world to reload parameters
+                    self.logger.info("Resetting Gazebo world to reload new parameters...")
+                    subprocess.run(self.gazebo_reset_command, shell=True)
+                    time.sleep(3)
 
                 for noise_param, dataset_param, run_param in zip(self.noisy_odom_params, self.dataset_class_params, self.run_params):
                     # --- START: NEW PATH FILTERING LOGIC ---
@@ -485,9 +499,10 @@ if __name__ == '__main__':
     # Environment parameters (optional - for testing different road conditions)
     # Set to None or empty list to skip environment parameter updates
     # Example: Test different friction levels for each vehicle
+    # Friction values: 0.85=dry road, 0.55=wet road, 0.1=icy road
     environment_params_list = [
-        {'road_condition': 'dry', 'wind_speed': 0.0},    # Golf cart on dry road
-        {'road_condition': 'wet', 'wind_speed': 0.0},    # Sedan on wet road
+        {'friction_mu': 0.85, 'friction_mu2': 0.85, 'wind_speed': 0.0},  # Golf cart: dry road (high friction)
+        {'friction_mu': 0.55, 'friction_mu2': 0.55, 'wind_speed': 5.0},  # Sedan: wet road (moderate friction) + 5 m/s wind
     ]
     # To disable environment parameter updates, set to None:
     # environment_params_list = None

@@ -130,17 +130,9 @@ def update_world_friction(world_path, env_params):
     with open(world_path, 'r') as f:
         content = f.read()
 
-    # Get active road condition
-    active_condition = env_params.get('active_road_condition', 'dry')
-    road_conditions = env_params['road_conditions']
-
-    if active_condition not in road_conditions:
-        print("Warning: Active road condition '{}' not found, using 'dry'".format(active_condition))
-        active_condition = 'dry'
-
-    friction_params = road_conditions[active_condition]
-    mu = friction_params['mu']
-    mu2 = friction_params['mu2']
+    # Get friction values directly from environment params
+    mu = env_params.get('friction_mu', 0.85)
+    mu2 = env_params.get('friction_mu2', 0.85)
 
     # Update friction values in asphalt plane section
     # Look for the friction section with comment "Friction of Dry Asphalt"
@@ -156,8 +148,8 @@ def update_world_friction(world_path, env_params):
     with open(world_path, 'w') as f:
         f.write(content)
 
-    print("Updated {}: road_condition={}, mu={}, mu2={}".format(
-        os.path.basename(world_path), active_condition, mu, mu2))
+    print("Updated {}: mu={} (longitudinal), mu2={} (lateral)".format(
+        os.path.basename(world_path), mu, mu2))
 
 def update_vehicle_params(vehicle_params_path, vehicle_params_update):
     """Update vehicle_params.yaml with new values"""
@@ -166,18 +158,21 @@ def update_vehicle_params(vehicle_params_path, vehicle_params_update):
     write_yaml(vehicle_params_path, params)
     print("Updated vehicle_params.yaml")
 
-def update_environment_params(environment_params_path, road_condition=None):
-    """Update environment_params.yaml with new road condition"""
+def update_environment_params(environment_params_path, friction_mu=None, friction_mu2=None):
+    """Update environment_params.yaml with new friction values"""
     params = read_yaml(environment_params_path)
 
-    if road_condition:
-        if road_condition not in params['road_conditions']:
-            print("Error: Unknown road condition '{}'".format(road_condition))
-            print("Available: {}".format(list(params['road_conditions'].keys())))
-            return params
-        params['active_road_condition'] = road_condition
+    if friction_mu is not None:
+        params['friction_mu'] = friction_mu
+        print("Updated friction_mu: {}".format(friction_mu))
+
+    if friction_mu2 is not None:
+        params['friction_mu2'] = friction_mu2
+        print("Updated friction_mu2: {}".format(friction_mu2))
+
+    if friction_mu is not None or friction_mu2 is not None:
         write_yaml(environment_params_path, params)
-        print("Updated environment_params.yaml: active_road_condition={}".format(road_condition))
+        print("Updated environment_params.yaml")
 
     return params
 
@@ -185,8 +180,10 @@ def update_environment_params(environment_params_path, road_condition=None):
 
 def main():
     parser = argparse.ArgumentParser(description='Update simulation files from YAML parameters')
-    parser.add_argument('--road-condition', type=str, choices=['icy', 'wet', 'dry'],
-                       help='Set road friction condition')
+    parser.add_argument('--friction-mu', type=float,
+                       help='Set longitudinal friction coefficient (0.1=icy, 0.55=wet, 0.85=dry)')
+    parser.add_argument('--friction-mu2', type=float,
+                       help='Set lateral friction coefficient (0.1=icy, 0.55=wet, 0.85=dry)')
     parser.add_argument('--vehicle-params', type=str,
                        help='Path to vehicle_params.yaml (default: config/vehicle_params.yaml)')
     parser.add_argument('--environment-params', type=str,
@@ -231,8 +228,8 @@ def main():
     print("=" * 60)
     print("Reading environment parameters from: {}".format(environment_params_path))
 
-    # Update road condition if specified
-    env_params = update_environment_params(environment_params_path, args.road_condition)
+    # Update friction values if specified
+    env_params = update_environment_params(environment_params_path, args.friction_mu, args.friction_mu2)
 
     print("\nUpdating world file...")
     update_world_friction(world_file, env_params)
@@ -242,7 +239,8 @@ def main():
     print("=" * 60)
     print("Vehicle: xacro files updated with vehicle_params.yaml")
     print("Environment: world file updated with environment_params.yaml")
-    print("Active road condition: {}".format(env_params['active_road_condition']))
+    print("Friction: mu={} (longitudinal), mu2={} (lateral)".format(
+        env_params.get('friction_mu', 0.85), env_params.get('friction_mu2', 0.85)))
     print("\nRun this script before launching Gazebo to ensure parameter consistency.")
 
 if __name__ == '__main__':
