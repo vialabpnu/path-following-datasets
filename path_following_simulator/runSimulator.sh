@@ -31,37 +31,49 @@ fi
 tmux rename-window 'Simulator Running Example'
 tmux set -g mouse on
 
+# Create 5 panes layout
 tmux split-window -v
 tmux select-pane -D
 tmux split-window -h
+tmux select-pane -U
+tmux split-window -h
 tmux select-pane -D
 tmux split-window -v
-tmux select-pane -D
+
+# Pane 0: roscore
 tmux select-pane -t 0
-
 tmux send "conda deactivate" C-m
-tmux send "cd \"$CAR_WS_PATH\"" C-m
-tmux send "source \"$CAR_WS_PATH/devel/setup.bash\"" C-m
-tmux send "roslaunch rbcar_sim_bringup rbcar_complete_rl.launch" C-m
+tmux send "source /opt/ros/melodic/setup.bash" C-m
+tmux send "roscore" C-m
 
+# Pane 1: Gazebo simulation
 tmux select-pane -t 1
 tmux send "conda deactivate" C-m
 tmux send "cd \"$CAR_WS_PATH\"" C-m
 tmux send "source \"$CAR_WS_PATH/devel/setup.bash\"" C-m
 tmux send "sleep 3" C-m
+tmux send "roslaunch rbcar_sim_bringup rbcar_complete_rl.launch" C-m
+
+# Pane 2: Robot control
+tmux select-pane -t 2
+tmux send "conda deactivate" C-m
+tmux send "cd \"$CAR_WS_PATH\"" C-m
+tmux send "source \"$CAR_WS_PATH/devel/setup.bash\"" C-m
+tmux send "sleep 5" C-m
 tmux send "roslaunch rbcar_control rbcar_control.launch" C-m
 
-tmux select-pane -t 2
+# Pane 3: RunandGatherResults.py
+tmux select-pane -t 3
 tmux send "conda activate mpc-gen" C-m
 tmux send "export CAR_WS_PATH=\"$CAR_WS_PATH\"" C-m
 tmux send "export DATASET_PATH=\"$DATASET_PATH\"" C-m
 tmux send "cd \"$CAR_WS_PATH/src/MPCSimulationRunner/scripts/\"" C-m
 tmux send "source \"$CAR_WS_PATH/devel/setup.bash\"" C-m
-tmux send "sleep 5" C-m
+tmux send "sleep 7" C-m
 tmux send "python RunandGatherResults.py" C-m
 
-# Set the environment variables (for car_ws and path_datasets)
-tmux select-pane -t 3
+# Pane 4: Environment variables check
+tmux select-pane -t 4
 tmux send "export CAR_WS_PATH=\"$CAR_WS_PATH\"" C-m
 tmux send "export DATASET_PATH=\"$DATASET_PATH\"" C-m
 # Check if the environment variables are set correctly

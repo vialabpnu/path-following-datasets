@@ -145,45 +145,57 @@ class RunandGatherResults:
         self.ros_stack_launched = False
 
     def launch_ros_stack(self):
-        """Launch ROS stack (roscore, Gazebo, robot control) using TmuxManager"""
+        """Launch Gazebo and robot control using TmuxManager (roscore runs separately in supervisord)"""
         if not USING_TMUX or not self.tmux:
             self.logger.warning("TmuxManager not available, assuming ROS stack is already running")
             self.ros_stack_launched = True
             return True
 
         self.logger.info("="*60)
-        self.logger.info("LAUNCHING ROS STACK WITH TMUXMANAGER")
+        self.logger.info("LAUNCHING GAZEBO AND ROBOT CONTROL WITH TMUXMANAGER")
         self.logger.info("="*60)
 
         try:
-            # Start tmux session
-            self.logger.info("Starting tmux session...")
-            self.tmux.start_session()
+            # Wait for roscore to be ready (launched by supervisord)
+            self.logger.info("Waiting for roscore to be ready...")
+            max_wait = 30
+            wait_time = 0
+            roscore_ready = False
 
-            # Launch roscore
-            self.logger.info("Launching roscore...")
-            self.tmux.send_command("main", "source /opt/ros/melodic/setup.bash && roscore")
-            time.sleep(2)
+            while wait_time < max_wait:
+                result = subprocess.run(
+                    ["rostopic", "list"],
+                    capture_output=True,
+                    timeout=2
+                )
+                if result.returncode == 0:
+                    roscore_ready = True
+                    self.logger.info("Roscore is ready!")
+                    break
+                time.sleep(1)
+                wait_time += 1
 
-            # Wait for roscore to be ready
-            if not self.tmux.wait_for_pattern("main", "started core service", timeout=10):
-                self.logger.error("Roscore failed to start")
+            if not roscore_ready:
+                self.logger.error("Roscore is not ready after 30 seconds")
                 return False
+
+            # Start tmux session
+            self.logger.info("Starting tmux session for Gazebo and robot control...")
+            self.tmux.start_session()
 
             # Launch Gazebo (ros-bringup)
             self.logger.info("Launching Gazebo simulation...")
-            self.tmux.create_pane("gazebo", split_from="main", split_direction='h')
             gazebo_cmd = (
                 f"source /opt/ros/melodic/setup.bash && "
                 f"source {self.current_workspace_dir}/devel/setup.bash && "
                 f"roslaunch rbcar_sim_bringup rbcar_complete_rl.launch"
             )
-            self.tmux.send_command("gazebo", gazebo_cmd)
+            self.tmux.send_command("main", gazebo_cmd)
             time.sleep(5)
 
             # Launch robot control
             self.logger.info("Launching robot control...")
-            self.tmux.create_pane("control", split_from="main", split_direction='v')
+            self.tmux.create_pane("control", split_from="main", split_direction='h')
             control_cmd = (
                 f"source /opt/ros/melodic/setup.bash && "
                 f"source {self.current_workspace_dir}/devel/setup.bash && "
@@ -192,7 +204,7 @@ class RunandGatherResults:
             self.tmux.send_command("control", control_cmd)
             time.sleep(3)
 
-            self.logger.info("ROS stack launched successfully")
+            self.logger.info("Gazebo and robot control launched successfully")
             self.ros_stack_launched = True
             return True
 
@@ -201,12 +213,12 @@ class RunandGatherResults:
             return False
 
     def shutdown_ros_stack(self):
-        """Shutdown ROS stack and cleanup tmux session"""
+        """Shutdown Gazebo and robot control, cleanup tmux session (roscore stays running in supervisord)"""
         if not self.ros_stack_launched:
             return
 
         self.logger.info("="*60)
-        self.logger.info("SHUTTING DOWN ROS STACK")
+        self.logger.info("SHUTTING DOWN GAZEBO AND ROBOT CONTROL")
         self.logger.info("="*60)
 
         if USING_TMUX and self.tmux:
@@ -217,10 +229,10 @@ class RunandGatherResults:
         self.ros_stack_launched = False
 
     def run_simulation(self):
-        # Launch ROS stack if using TmuxManager
+        # Launch Gazebo and robot control if using TmuxManager (roscore runs separately in supervisord)
         if USING_TMUX:
             if not self.launch_ros_stack():
-                self.logger.error("Failed to launch ROS stack, aborting")
+                self.logger.error("Failed to launch Gazebo and robot control, aborting")
                 return
 
         try:
