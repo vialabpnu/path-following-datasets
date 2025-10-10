@@ -5,7 +5,7 @@ import rospy
 import numpy as np
 
 from nav_msgs.msg import Path, Odometry
-from motion_planner.msg import Local_path
+from motion_planner.msg import LocalPath
 from geometry_msgs.msg import PoseStamped
 
 class VisualizeLocalPath(object):
@@ -14,7 +14,7 @@ class VisualizeLocalPath(object):
         self._global_path = None
         self._local_path_viz_pub = rospy.Publisher('/motion_planner_local_path', Path, queue_size=1)
         self._global_path_viz_pub = rospy.Publisher('/global_path', Path, queue_size=1)
-        self._local_path_sub = rospy.Subscriber('/path_motion_planner', Local_path, self.visualization_cb, queue_size=1)
+        self._local_path_sub = rospy.Subscriber('/path_motion_planner', LocalPath, self.visualization_cb, queue_size=1)
         self._global_path_sub = rospy.Subscriber('/move_base/GlobalPlanner/plan', Path, self.global_path_cb, queue_size=1)
         self._odom_sub = rospy.Subscriber('/INS/odom', Odometry, self.odom_cb, queue_size=1)
         self._use_motion_planner = rospy.get_param('/use_motion_planner', False)

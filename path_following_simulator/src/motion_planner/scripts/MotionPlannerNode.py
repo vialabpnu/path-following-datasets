@@ -21,7 +21,7 @@ from move_base_msgs.msg import MoveBaseAction
 from nav_msgs.msg import Path, Odometry
 from std_msgs.msg import Bool
 from ackermann_msgs.msg import AckermannDriveStamped
-from motion_planner.msg import Local_path, State
+from motion_planner.msg import LocalPath, State
 from tf.transformations import euler_from_quaternion
 from Helper import PathSmoother, GazeboHelper, GoalCheckerandGetter
 
@@ -101,7 +101,7 @@ class MotionPlannerNode:
         if not self.ref_path_load_from_file:
             self.global_path_sub = rospy.Subscriber('/move_base/GlobalPlanner/plan', Path, self.global_path_callback)
             # self.global_path_sub = rospy.Subscriber('/move_base/HybridAStarPlanner/plan', Path, self.global_path_callback)
-        self.pub = rospy.Publisher('/path_motion_planner', Local_path, queue_size=1)
+        self.pub = rospy.Publisher('/path_motion_planner', LocalPath, queue_size=1)
         self.pub_global_path = rospy.Publisher('/global_path', Path, queue_size=1)
         self.goal_reached_mp = rospy.Publisher('/path_motion_planner/goal_reached', Bool, queue_size=1)
         self.halting_pub = rospy.Publisher('/rbcar_robot_control/command', AckermannDriveStamped, queue_size=1)
@@ -508,7 +508,7 @@ class MotionPlannerNode:
                     ref_v.data = [0.0] * len(self.path.x)
                     curv = State()
                     curv.data = [0.0] * len(self.path.x)
-                    ref_path = Local_path()
+                    ref_path = LocalPath()
                     ref_path.header.stamp = rospy.Time.now()
                     ref_path.ref_state.append(ref_x)
                     ref_path.ref_state.append(ref_y)
@@ -560,7 +560,7 @@ class MotionPlannerNode:
                 if self.DEBUG:
                     rospy.loginfo("Length of ref x: %d", len(self.path.x))
                     rospy.loginfo("Length of ref y: %d", len(self.path.y))
-                ref_path = Local_path()
+                ref_path = LocalPath()
                 ref_path.header.stamp = rospy.Time.now()
                 ref_path.ref_state.append(ref_x)
                 ref_path.ref_state.append(ref_y)

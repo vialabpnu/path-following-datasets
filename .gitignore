@@ -38,3 +38,4 @@ install_manifest.txt
 compile_commands.json
 
 .claude
+path_following_simulator/config/*.md
