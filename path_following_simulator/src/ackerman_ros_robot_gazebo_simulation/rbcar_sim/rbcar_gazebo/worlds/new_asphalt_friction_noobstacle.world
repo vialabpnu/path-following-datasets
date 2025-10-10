@@ -29,6 +29,10 @@
         <real_time_factor>1</real_time_factor>
         <real_time_update_rate>1000</real_time_update_rate>
         </physics>
+        <!-- Wind parameters (Change wind here) -->
+        <wind>
+            <linear_velocity>0 0 0</linear_velocity>
+        </wind>
         <model name='ground_plane'>
         <static>1</static>
         <link name='link'>

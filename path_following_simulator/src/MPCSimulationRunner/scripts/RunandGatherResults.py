@@ -240,196 +240,218 @@ class RunandGatherResults:
 
     def run_simulation(self):
         try:
-            for idx, vehicle_params in enumerate(self.vehicle_params_list):
-                self.logger.info("="*60)
-                self.logger.info(f"EXPERIMENT {idx+1}/{len(self.vehicle_params_list)}")
-                self.logger.info("="*60)
+            # Calculate total experiments
+            total_experiments = len(self.vehicle_params_list) * len(self.environment_params_list)
+            experiment_count = 0
 
-                # Update environment parameters if specified
-                environment_params = self.environment_params_list[idx] if idx < len(self.environment_params_list) else None
+            # Nested loops: for each vehicle, test all environments
+            for vehicle_idx, vehicle_params in enumerate(self.vehicle_params_list):
+                for env_idx, environment_params in enumerate(self.environment_params_list):
+                    experiment_count += 1
 
-                if environment_params and USING_NEW_UPDATER:
-                    self.logger.info(f"Updating environment parameters: {environment_params}")
-                    environment_params_path = os.path.join(self.current_workspace_dir, 'config', 'environment_params.yaml')
+                    self.logger.info("="*60)
+                    self.logger.info(f"EXPERIMENT {experiment_count}/{total_experiments}")
+                    self.logger.info(f"Vehicle {vehicle_idx+1}/{len(self.vehicle_params_list)}, Environment {env_idx+1}/{len(self.environment_params_list)}")
+                    self.logger.info("="*60)
 
-                    # Read existing environment params
-                    if os.path.exists(environment_params_path):
-                        with open(environment_params_path, 'r') as f:
-                            env_config = yaml.safe_load(f)
+                    # Update environment parameters if specified
+                    if environment_params and USING_NEW_UPDATER:
+                        self.logger.info(f"Updating environment parameters: {environment_params}")
+                        environment_params_path = os.path.join(self.current_workspace_dir, 'config', 'environment_params.yaml')
 
-                        # Update with new values (using direct friction values)
-                        if 'friction_mu' in environment_params:
-                            env_config['friction_mu'] = environment_params['friction_mu']
-                            self.logger.info(f"Setting friction_mu (longitudinal): {environment_params['friction_mu']}")
+                        # Read existing environment params
+                        if os.path.exists(environment_params_path):
+                            with open(environment_params_path, 'r') as f:
+                                env_config = yaml.safe_load(f)
 
-                        if 'friction_mu2' in environment_params:
-                            env_config['friction_mu2'] = environment_params['friction_mu2']
-                            self.logger.info(f"Setting friction_mu2 (lateral): {environment_params['friction_mu2']}")
+                            # Update with new values (using direct friction values)
+                            if 'friction_mu' in environment_params:
+                                env_config['friction_mu'] = environment_params['friction_mu']
+                                self.logger.info(f"Setting friction_mu (longitudinal): {environment_params['friction_mu']}")
 
-                        if 'wind_speed' in environment_params:
-                            env_config['wind']['mean_speed_mps'] = environment_params['wind_speed']
-                            self.logger.info(f"Setting wind speed: {environment_params['wind_speed']} m/s")
+                            if 'friction_mu2' in environment_params:
+                                env_config['friction_mu2'] = environment_params['friction_mu2']
+                                self.logger.info(f"Setting friction_mu2 (lateral): {environment_params['friction_mu2']}")
 
-                        # Write updated environment params
-                        with open(environment_params_path, 'w') as f:
-                            yaml.dump(env_config, f)
+                            if 'wind_speed' in environment_params:
+                                env_config['wind']['mean_speed_mps'] = environment_params['wind_speed']
+                                self.logger.info(f"Setting wind speed: {environment_params['wind_speed']} m/s")
 
-                # Update vehicle parameters
-                self.logger.info(f"Updating vehicle parameters: {vehicle_params}")
-                vehicle_params_path = os.path.join(self.current_workspace_dir, 'config', 'vehicle_params.yaml')
-                with open(vehicle_params_path, 'w') as f:
-                    yaml.dump(vehicle_params, f)
-
-                # Run update script (updates xacro files and/or world file BEFORE Gazebo launches)
-                self.logger.info("Updating simulation files from YAML (xacro + world)...")
-                update_script.main()
-
-                # Launch Gazebo AFTER xacro updates (only on first iteration)
-                if idx == 0:
-                    if USING_TMUX:
-                        if not self.launch_ros_stack():
-                            self.logger.error("Failed to launch Gazebo and robot control, aborting")
-                            return
-                else:
-                    # For subsequent vehicle params: reset Gazebo world to reload parameters
-                    self.logger.info("Resetting Gazebo world to reload new parameters...")
-                    subprocess.run(self.gazebo_reset_command, shell=True)
-                    time.sleep(3)
-
-                for noise_param, dataset_param, run_param in zip(self.noisy_odom_params, self.dataset_class_params, self.run_params):
-                    # --- START: NEW PATH FILTERING LOGIC ---
-                    current_path_files_list = []
-
-                    # 1. Filter Easy paths (starting with 'E_')
-                    if dataset_param.get('enable_easy', False):
-                        current_path_files_list.extend([p for p in self.path_files_list if p.startswith('E_')])
-
-                    # 2. Filter Moderate paths (starting with 'M_')
-                    if dataset_param.get('enable_moderate', False):
-                        current_path_files_list.extend([p for p in self.path_files_list if p.startswith('M_')])
-
-                    # 3. Filter Hard paths (starting with 'H_')
-                    if dataset_param.get('enable_hard', False):
-                        current_path_files_list.extend([p for p in self.path_files_list if p.startswith('H_')])
-
-                    if not current_path_files_list:
-                        self.logger.warning(f"No path files selected for dataset parameters: {dataset_param}. Skipping run.")
-                        continue # Skip this run if no paths are selected
-
-                    # self.logger.info(f"Selected path files for this run: {current_path_files_list}")
-                    # --- END: NEW PATH FILTERING LOGIC ---
-
-                    noisy_odom_cmd = self.build_rosrun_cmd(noise_param)
-                    self.logger.info(f"Running noisy odometry node with command: {noisy_odom_cmd}")
-
-                    # 1. 딕셔너리(run_param)에서 'which_mpc' 키의 값(리스트)을 가져옵니다.
-                    mpc_type_list = run_param.get('which_mpc', [])
-
-                    # Start the noisy odom node as a subprocess
-                    noisy_proc = subprocess.Popen(noisy_odom_cmd, shell=True, executable="/bin/bash")
-                    # Create a folder based on the evaluation results path target and count of the noisy odom params
-                    self.eval_folder_count += 1
-                    self.eval_results_path_target_run = os.path.join(self.eval_results_path_target, 'run_' + str(self.eval_folder_count))
-                    if not os.path.exists(self.eval_results_path_target_run):
-                        os.mkdir(self.eval_results_path_target_run)
-
-
-                    for i, path_file in enumerate(current_path_files_list):
-                        self.logger.info(f"Running the simulation for path file: {path_file}")
-
-                        for sampling_param in mpc_type_list:
-                            self.process_list = []
-                            run_command_dict = {
-                                'mpc_node': self.run_command_mpc_node,
-                                'motion_planner': self.run_command_motion_planner,
-                                'mpc_server': self.run_command_mpc_server + ' --horizon_type ' + sampling_param + ' --file_path_name ' + path_file + ' --eval_path_folder ' + self.current_time
-                            }
-                            print(f"MPC Server: {run_command_dict['mpc_server']}")
-                            idx = 0
-
-                            time.sleep(3)
-                            for key, value in run_command_dict.items():
-                                if key == 'mpc_server':
-                                    command = [f"cd {self.current_workspace_dir}",
-                                            ". ~/anaconda3/etc/profile.d/conda.sh && conda activate mpc-gen",
-                                            str(value)]
-                                elif key == 'mpc_node':
-                                    command = [f"source {self.current_workspace_dir}" + "/devel/setup.bash",
-                                            f"sleep {self.sleep_list[idx]}",
-                                            str(value) + ' --eval_mode True' + ' --file_path_name ' + path_file + ' --file_path_dir ' + self.eval_results_path_target_run \
-                                            + ' --horizon_type ' + sampling_param
-                                            ]
-                                elif key == 'motion_planner':
-                                    command = ["cd ",
-                                            f"source {self.current_workspace_dir}" + "/devel/setup.bash",
-                                            f"sleep {self.sleep_list[idx]}",
-                                            str(value) + ' eval_mode:=true' + ' file_path:=' + path_file
-                                            ]
+                            if 'wind_direction' in environment_params:
+                                wind_dir = environment_params['wind_direction']
+                                # Support 'random' keyword for randomized wind direction
+                                if isinstance(wind_dir, str) and wind_dir.lower() == 'random':
+                                    self.logger.info("Setting wind direction: random (will be randomized each run)")
                                 else:
-                                    command = [f"cd {self.current_workspace_dir}",
-                                            f"sleep {self.sleep_list[idx]}",
-                                            str(value)
-                                            ]
-                                print_output = True
-                                stdout = sys.stdout if print_output else subprocess.DEVNULL
-                                logging.info(f"Running command: {';'.join(command)}")
-                                process = subprocess.Popen((';'.join(command)), shell=True, executable="/bin/bash")
-                                self.process_list.append(process)
-                                idx += 1
+                                    self.logger.info(f"Setting wind direction: {wind_dir} degrees")
+                                env_config['wind']['direction_deg'] = wind_dir
 
-                            subprocess.run(self.run_unpause_physics, shell=True)
-                            start_time = time.time()
-                            what_to_kill_in_ros = "rosnode kill motion_planner_node"
-                            what_to_kill_in_ros_mpc_node = "rosnode kill mpc_node"
-                            fuse_udp = "fuser -k 12345/udp"
-                            while time.time() - start_time < self.timeout:
-                                if self.process_list[2].poll() is not None:
+                            # Write updated environment params
+                            with open(environment_params_path, 'w') as f:
+                                yaml.dump(env_config, f)
+
+                    # Update vehicle parameters
+                    self.logger.info(f"Updating vehicle parameters: {vehicle_params}")
+                    vehicle_params_path = os.path.join(self.current_workspace_dir, 'config', 'vehicle_params.yaml')
+                    with open(vehicle_params_path, 'w') as f:
+                        yaml.dump(vehicle_params, f)
+
+                    # Run update script (updates xacro files and/or world file BEFORE Gazebo launches)
+                    self.logger.info("Updating simulation files from YAML (xacro + world)...")
+                    update_script.main()
+
+                    # Launch Gazebo AFTER xacro updates (only on first vehicle AND first environment)
+                    if vehicle_idx == 0 and env_idx == 0:
+                        if USING_TMUX:
+                            if not self.launch_ros_stack():
+                                self.logger.error("Failed to launch Gazebo and robot control, aborting")
+                                return
+                    else:
+                        # For all other combinations: reset Gazebo world to reload parameters
+                        self.logger.info("Resetting Gazebo world to reload new parameters...")
+                        subprocess.run(self.gazebo_reset_command, shell=True)
+                        time.sleep(3)
+
+                    for noise_param, dataset_param, run_param in zip(self.noisy_odom_params, self.dataset_class_params, self.run_params):
+                        # --- START: NEW PATH FILTERING LOGIC ---
+                        current_path_files_list = []
+
+                        # 1. Filter Easy paths (starting with 'E_')
+                        if dataset_param.get('enable_easy', False):
+                            current_path_files_list.extend([p for p in self.path_files_list if p.startswith('E_')])
+
+                        # 2. Filter Moderate paths (starting with 'M_')
+                        if dataset_param.get('enable_moderate', False):
+                            current_path_files_list.extend([p for p in self.path_files_list if p.startswith('M_')])
+
+                        # 3. Filter Hard paths (starting with 'H_')
+                        if dataset_param.get('enable_hard', False):
+                            current_path_files_list.extend([p for p in self.path_files_list if p.startswith('H_')])
+
+                        if not current_path_files_list:
+                            self.logger.warning(f"No path files selected for dataset parameters: {dataset_param}. Skipping run.")
+                            continue # Skip this run if no paths are selected
+
+                        # self.logger.info(f"Selected path files for this run: {current_path_files_list}")
+                        # --- END: NEW PATH FILTERING LOGIC ---
+
+                        # Log noise parameters explicitly
+                        self.logger.info("Noise parameters:")
+                        self.logger.info(f"  enable_x: {noise_param['enable_x']} (stddev: {noise_param['x_stddev']})")
+                        self.logger.info(f"  enable_y: {noise_param['enable_y']} (stddev: {noise_param['y_stddev']})")
+                        self.logger.info(f"  enable_heading: {noise_param['enable_heading']} (stddev: {noise_param['heading_stddev']})")
+                        self.logger.info(f"  enable_speed: {noise_param['enable_speed']} (stddev: {noise_param['speed_stddev']})")
+
+                        noisy_odom_cmd = self.build_rosrun_cmd(noise_param)
+
+                        # 1. 딕셔너리(run_param)에서 'which_mpc' 키의 값(리스트)을 가져옵니다.
+                        mpc_type_list = run_param.get('which_mpc', [])
+
+                        # Start the noisy odom node as a subprocess
+                        noisy_proc = subprocess.Popen(noisy_odom_cmd, shell=True, executable="/bin/bash")
+                        # Create a folder based on the evaluation results path target and count of the noisy odom params
+                        self.eval_folder_count += 1
+                        self.eval_results_path_target_run = os.path.join(self.eval_results_path_target, 'run_' + str(self.eval_folder_count))
+                        if not os.path.exists(self.eval_results_path_target_run):
+                            os.mkdir(self.eval_results_path_target_run)
+
+
+                        for i, path_file in enumerate(current_path_files_list):
+                            self.logger.info(f"Running the simulation for path file: {path_file}")
+
+                            for sampling_param in mpc_type_list:
+                                self.process_list = []
+                                run_command_dict = {
+                                    'mpc_node': self.run_command_mpc_node,
+                                    'motion_planner': self.run_command_motion_planner,
+                                    'mpc_server': self.run_command_mpc_server + ' --horizon_type ' + sampling_param + ' --file_path_name ' + path_file + ' --eval_path_folder ' + self.current_time
+                                }
+                                print(f"MPC Server: {run_command_dict['mpc_server']}")
+                                idx = 0
+
+                                time.sleep(3)
+                                for key, value in run_command_dict.items():
+                                    if key == 'mpc_server':
+                                        command = [f"cd {self.current_workspace_dir}",
+                                                ". ~/anaconda3/etc/profile.d/conda.sh && conda activate mpc-gen",
+                                                str(value)]
+                                    elif key == 'mpc_node':
+                                        command = [f"source {self.current_workspace_dir}" + "/devel/setup.bash",
+                                                f"sleep {self.sleep_list[idx]}",
+                                                str(value) + ' --eval_mode True' + ' --file_path_name ' + path_file + ' --file_path_dir ' + self.eval_results_path_target_run \
+                                                + ' --horizon_type ' + sampling_param
+                                                ]
+                                    elif key == 'motion_planner':
+                                        command = ["cd ",
+                                                f"source {self.current_workspace_dir}" + "/devel/setup.bash",
+                                                f"sleep {self.sleep_list[idx]}",
+                                                str(value) + ' eval_mode:=true' + ' file_path:=' + path_file
+                                                ]
+                                    else:
+                                        command = [f"cd {self.current_workspace_dir}",
+                                                f"sleep {self.sleep_list[idx]}",
+                                                str(value)
+                                                ]
+                                    print_output = True
+                                    stdout = sys.stdout if print_output else subprocess.DEVNULL
+                                    logging.info(f"Running command: {';'.join(command)}")
+                                    process = subprocess.Popen((';'.join(command)), shell=True, executable="/bin/bash")
+                                    self.process_list.append(process)
+                                    idx += 1
+
+                                subprocess.run(self.run_unpause_physics, shell=True)
+                                start_time = time.time()
+                                what_to_kill_in_ros = "rosnode kill motion_planner_node"
+                                what_to_kill_in_ros_mpc_node = "rosnode kill mpc_node"
+                                fuse_udp = "fuser -k 12345/udp"
+                                while time.time() - start_time < self.timeout:
+                                    if self.process_list[2].poll() is not None:
+                                        self.process_list[2].terminate()
+                                        self.logger.info("MPC server is done!")
+                                        subprocess.run(fuse_udp, shell=True)
+                                        subprocess.run(self.gazebo_reset_command, shell=True)
+                                        subprocess.run(what_to_kill_in_ros, shell=True)
+                                        subprocess.run(what_to_kill_in_ros_mpc_node, shell=True)
+                                        time.sleep(1)
+                                        break
+                                else:
+                                    with open(os.path.join(self.eval_results_path, 'timeout.txt'), 'w') as f:
+                                        f.write('Timeout has occurred!')
+                                    time.sleep(1)
+                                    self.logger.info("Timeout! Killing the processes")
                                     self.process_list[2].terminate()
-                                    self.logger.info("MPC server is done!")
                                     subprocess.run(fuse_udp, shell=True)
                                     subprocess.run(self.gazebo_reset_command, shell=True)
                                     subprocess.run(what_to_kill_in_ros, shell=True)
                                     subprocess.run(what_to_kill_in_ros_mpc_node, shell=True)
                                     time.sleep(1)
-                                    break
-                            else:
-                                with open(os.path.join(self.eval_results_path, 'timeout.txt'), 'w') as f:
-                                    f.write('Timeout has occurred!')
-                                time.sleep(1)
-                                self.logger.info("Timeout! Killing the processes")
-                                self.process_list[2].terminate()
-                                subprocess.run(fuse_udp, shell=True)
-                                subprocess.run(self.gazebo_reset_command, shell=True)
-                                subprocess.run(what_to_kill_in_ros, shell=True)
-                                subprocess.run(what_to_kill_in_ros_mpc_node, shell=True)
-                                time.sleep(1)
 
-                            time.sleep(4)
-                            if os.path.exists(os.path.join(self.eval_results_path, 'timeout.txt')):
-                                os.remove(os.path.join(self.eval_results_path, 'timeout.txt'))
-                            if self.save_results_in_eval_test_folder:
-                                self.logger.info("Moving the results to the evaluation folder")
-                                get_list_files = os.listdir(self.eval_results_path_target)
-                                for file in get_list_files:
-                                    if file.endswith('.csv'):
-                                        os.rename(os.path.join(self.eval_results_path_target, file), os.path.join(self.eval_results_path_target_run, file))
-                                with open(os.path.join(self.eval_results_path_target, 'path_dir.csv'), 'w') as f:
-                                    f.write(self.path_files)
+                                time.sleep(4)
+                                if os.path.exists(os.path.join(self.eval_results_path, 'timeout.txt')):
+                                    os.remove(os.path.join(self.eval_results_path, 'timeout.txt'))
+                                if self.save_results_in_eval_test_folder:
+                                    self.logger.info("Moving the results to the evaluation folder")
+                                    get_list_files = os.listdir(self.eval_results_path_target)
+                                    for file in get_list_files:
+                                        if file.endswith('.csv'):
+                                            os.rename(os.path.join(self.eval_results_path_target, file), os.path.join(self.eval_results_path_target_run, file))
+                                    with open(os.path.join(self.eval_results_path_target, 'path_dir.csv'), 'w') as f:
+                                        f.write(self.path_files)
 
-                                self.logger.info("Finished moving the results to the evaluation folder")
-                        self.logger.info("Finished running the results gathering!")
-                    self.logger.info("Finished running the simulation!")
+                                    self.logger.info("Finished moving the results to the evaluation folder")
+                            self.logger.info("Finished running the results gathering!")
+                        self.logger.info("Finished running the simulation!")
 
-                    # Terminate the noisy odom node after the simulation
-                    self.logger.info("Terminating noisy odometry node.")
-                    noisy_proc.terminate()
-                    try:
-                        noisy_proc.wait(timeout=5)
-                    except subprocess.TimeoutExpired:
-                        self.logger.warning("Noisy odometry node did not terminate gracefully, killing.")
-                        noisy_proc.kill()
-                    # Wait for the noisy odom node to terminate totally
-                    time.sleep(1)
+                        # Terminate the noisy odom node after the simulation
+                        self.logger.info("Terminating noisy odometry node.")
+                        noisy_proc.terminate()
+                        try:
+                            noisy_proc.wait(timeout=5)
+                        except subprocess.TimeoutExpired:
+                            self.logger.warning("Noisy odometry node did not terminate gracefully, killing.")
+                            noisy_proc.kill()
+                        # Wait for the noisy odom node to terminate totally
+                        time.sleep(1)
         finally:
             # Always shutdown ROS stack when done (success or failure)
             self.shutdown_ros_stack()
@@ -497,20 +519,24 @@ if __name__ == '__main__':
         vehicle_params_list.append(vehicle_params)
 
     # Environment parameters (optional - for testing different road conditions)
-    # Set to None or empty list to skip environment parameter updates
-    # Example: Test different friction levels for each vehicle
+    # NESTED LOOP STRUCTURE: Each vehicle will be tested with ALL environments
+    # Example: 2 vehicles × 3 environments = 6 total experiments
     # Friction values: 0.85=dry road, 0.55=wet road, 0.1=icy road
+    # Wind: speed in m/s, direction in degrees (0=North, 90=East, 180=South, 270=West) or 'random'
     environment_params_list = [
-        {'friction_mu': 0.85, 'friction_mu2': 0.85, 'wind_speed': 0.0},  # Golf cart: dry road (high friction)
-        {'friction_mu': 0.55, 'friction_mu2': 0.55, 'wind_speed': 5.0},  # Sedan: wet road (moderate friction) + 5 m/s wind
+        {'friction_mu': 0.85, 'friction_mu2': 0.85, 'wind_speed': 0.0, 'wind_direction': 0},  # dry road, no wind
+        {'friction_mu': 0.55, 'friction_mu2': 0.55, 'wind_speed': 5.0, 'wind_direction': 'random'},  # wet road, 5 m/s wind from random direction
+        {'friction_mu': 0.1, 'friction_mu2': 0.1, 'wind_speed': 10.0, 'wind_direction': 180},  # icy road, 10 m/s headwind from South
     ]
+    # Result: Golf cart tested on dry, wet, icy; Sedan tested on dry, wet, icy = 6 experiments total
     # To disable environment parameter updates, set to None:
     # environment_params_list = None
 
     # Set the noisy odometry parameters
-    noisy_odom_params = [{'enable_x': False, 'enable_y': False, 'enable_heading': False, 'enable_speed': False, 'x_stddev': 0.0625, 'y_stddev': 0.0625, 'speed_stddev': 0.06, 'heading_stddev': 0.0174},
-                         {'enable_x': False, 'enable_y': False, 'enable_heading': False, 'enable_speed': False, 'x_stddev': 0.0625, 'y_stddev': 0.0625, 'speed_stddev': 0.06, 'heading_stddev': 0.0349},
-                         {'enable_x': False, 'enable_y': False, 'enable_heading': False, 'enable_speed': False, 'x_stddev': 0.0625, 'y_stddev': 0.0625, 'speed_stddev': 0.06, 'heading_stddev': 0.0698}]
+    # Example: Three different heading noise levels (1°, 2°, 4° stddev)
+    noisy_odom_params = [{'enable_x': True, 'enable_y': True, 'enable_heading': True, 'enable_speed': True, 'x_stddev': 0.0625, 'y_stddev': 0.0625, 'speed_stddev': 0.06, 'heading_stddev': 0.0174},  # 1° heading noise
+                         {'enable_x': True, 'enable_y': True, 'enable_heading': True, 'enable_speed': True, 'x_stddev': 0.0625, 'y_stddev': 0.0625, 'speed_stddev': 0.06, 'heading_stddev': 0.0349},  # 2° heading noise
+                         {'enable_x': True, 'enable_y': True, 'enable_heading': True, 'enable_speed': True, 'x_stddev': 0.0625, 'y_stddev': 0.0625, 'speed_stddev': 0.06, 'heading_stddev': 0.0698}]  # 4° heading noise
     dataset_class_params = [{'enable_easy': True, 'enable_moderate': False, 'enable_hard': False},
                             {'enable_easy': False, 'enable_moderate': True, 'enable_hard': False},
                             {'enable_easy': False, 'enable_moderate': False, 'enable_hard': True}]

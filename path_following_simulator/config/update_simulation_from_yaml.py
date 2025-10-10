@@ -10,6 +10,8 @@ import yaml
 import os
 import re
 import argparse
+import math
+import random
 
 def read_yaml(yaml_path):
     """Read YAML file"""
@@ -151,6 +153,47 @@ def update_world_friction(world_path, env_params):
     print("Updated {}: mu={} (longitudinal), mu2={} (lateral)".format(
         os.path.basename(world_path), mu, mu2))
 
+def update_world_wind(world_path, env_params):
+    """Update world file with wind parameters
+
+    Supports randomized wind direction by setting direction_deg to 'random' in env_params
+    """
+    with open(world_path, 'r') as f:
+        content = f.read()
+
+    # Get wind parameters from environment params
+    wind_speed = env_params.get('wind', {}).get('mean_speed_mps', 0.0)
+    wind_direction_deg = env_params.get('wind', {}).get('direction_deg', 0)
+
+    # Check if wind direction should be randomized
+    if isinstance(wind_direction_deg, str) and wind_direction_deg.lower() == 'random':
+        wind_direction_deg = random.uniform(0, 360)
+        print("Randomized wind direction: {:.1f} degrees".format(wind_direction_deg))
+
+    # Convert wind direction (degrees) to velocity components
+    # 0° = North (+Y), 90° = East (+X), 180° = South (-Y), 270° = West (-X)
+    wind_direction_rad = math.radians(wind_direction_deg)
+    wind_x = wind_speed * math.sin(wind_direction_rad)  # East component
+    wind_y = wind_speed * math.cos(wind_direction_rad)  # North component
+    wind_z = 0.0  # No vertical wind
+
+    # Update wind values in wind section
+    # Look for the wind section with comment "Wind parameters"
+    wind_pattern = r'(<!-- Wind parameters \(Change wind here\) -->.*?<wind>.*?<linear_velocity>)([\d.\-\s]+)(</linear_velocity>)'
+
+    def replace_wind(match):
+        return '{}{:.2f} {:.2f} {:.2f}{}'.format(
+            match.group(1), wind_x, wind_y, wind_z, match.group(3)
+        )
+
+    content = re.sub(wind_pattern, replace_wind, content, flags=re.DOTALL)
+
+    with open(world_path, 'w') as f:
+        f.write(content)
+
+    print("Updated {}: wind_speed={} m/s at {} degrees (x={:.2f}, y={:.2f})".format(
+        os.path.basename(world_path), wind_speed, wind_direction_deg, wind_x, wind_y))
+
 def update_vehicle_params(vehicle_params_path, vehicle_params_update):
     """Update vehicle_params.yaml with new values"""
     params = read_yaml(vehicle_params_path)
@@ -233,6 +276,7 @@ def main():
 
     print("\nUpdating world file...")
     update_world_friction(world_file, env_params)
+    update_world_wind(world_file, env_params)
 
     print("\n" + "=" * 60)
     print("[SUCCESS] Updated all simulation files")
@@ -241,6 +285,9 @@ def main():
     print("Environment: world file updated with environment_params.yaml")
     print("Friction: mu={} (longitudinal), mu2={} (lateral)".format(
         env_params.get('friction_mu', 0.85), env_params.get('friction_mu2', 0.85)))
+    print("Wind: {} m/s at {} degrees".format(
+        env_params.get('wind', {}).get('mean_speed_mps', 0.0),
+        env_params.get('wind', {}).get('direction_deg', 0)))
     print("\nRun this script before launching Gazebo to ensure parameter consistency.")
 
 if __name__ == '__main__':
