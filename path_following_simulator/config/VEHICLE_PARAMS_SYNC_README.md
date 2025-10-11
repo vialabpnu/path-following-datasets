@@ -121,6 +121,3 @@ The `RunandGatherResults.py` script automatically:
 ✓ rbcar_localization/scripts/noisy_odom_generator.py (ENHANCED)
 ✓ MPCSimulationRunner/scripts/RunandGatherResults.py (ENHANCED)
 ```
-
-## Contact
-For questions or issues, please refer to your professor's implementation notes.
